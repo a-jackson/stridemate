@@ -1,0 +1,30 @@
+{
+  "name": "fitness",
+  "version": "0.0.1",
+  "description": "",
+  "main": "dist/index.js",
+  "author": "Andrew Jackson",
+  "license": "MIT",
+  "repository": {
+    "url": "",
+    "type": "git"
+  },
+  "scripts": {
+    "build": "tsc",
+    "migrate": "node-pg-migrate",
+    "docker-build": "docker build -t ajackson3/fitness-recorder:latest ."
+  },
+  "dependencies": {
+    "dotenv": "^10.0.0",
+    "inversify": "^6.0.1",
+    "mqtt": "^4.3.2",
+    "node-pg-migrate": "^6.2.0",
+    "pg": "^8.7.1",
+    "reflect-metadata": "^0.1.13"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.6",
+    "prettier": "^2.5.1",
+    "typescript": "^4.5.4"
+  }
+}
