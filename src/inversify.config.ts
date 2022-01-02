@@ -5,6 +5,14 @@ import {
   ConnectionManager,
   ConnectionManagerImpl,
 } from './data/connection-manager';
+import {
+  DeviceRepository,
+  DeviceRepositoryImpl,
+} from './data/device-repository';
+import {
+  LocationRepository,
+  LocationRepositoryImpl,
+} from './data/location-repository';
 import { UserRepository, UserRepositoryImpl } from './data/user-repository';
 import { Mqtt, MqttClient } from './mqtt/mqtt';
 import TYPES from './types';
@@ -20,6 +28,14 @@ container
 container
   .bind<UserRepository>(TYPES.UserRepository)
   .to(UserRepositoryImpl)
+  .inTransientScope();
+container
+  .bind<DeviceRepository>(TYPES.DeviceRepository)
+  .to(DeviceRepositoryImpl)
+  .inTransientScope();
+container
+  .bind<LocationRepository>(TYPES.LocationRepository)
+  .to(LocationRepositoryImpl)
   .inTransientScope();
 
 export { container };

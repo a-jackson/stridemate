@@ -16,7 +16,7 @@ export class UserRepositoryImpl implements UserRepository {
   ) {}
 
   public async getById(entityId: number): Promise<User | undefined> {
-    const client = await this.connectionManager.getConnection();
+    const client = await this.connectionManager.getClient();
     const result = await client.query<User>(
       `SELECT "userId", "name" FROM users WHERE "userId" = $1`,
       [entityId],
@@ -28,7 +28,7 @@ export class UserRepositoryImpl implements UserRepository {
   }
 
   public async getByName(name: string): Promise<User | undefined> {
-    const client = await this.connectionManager.getConnection();
+    const client = await this.connectionManager.getClient();
     const result = await client.query<User>(
       `SELECT "userId", "name" FROM users WHERE "name" = $1`,
       [name],
@@ -40,7 +40,7 @@ export class UserRepositoryImpl implements UserRepository {
   }
 
   public async getAll(): Promise<User[]> {
-    const client = await this.connectionManager.getConnection();
+    const client = await this.connectionManager.getClient();
 
     const result = await client.query<User>(
       'SELECT "userId", "name" FROM users',
@@ -58,9 +58,9 @@ export class UserRepositoryImpl implements UserRepository {
   }
 
   public async insert(entity: Partial<User>): Promise<User> {
-    const client = await this.connectionManager.getConnection();
+    const client = await this.connectionManager.getClient();
     const result = await client.query<User>(
-      `INSERT INTO users ( "name" ) VALUES ( $1 ) RETURNING *`,
+      `INSERT INTO users ( "name" ) VALUES ( $1 ) RETURNING "userId", "name"`,
       [entity.name],
     );
 

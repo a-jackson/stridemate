@@ -2,7 +2,7 @@
 
 exports.shorthands = undefined;
 
-exports.up = (pgm) => {
+exports.up = pgm => {
   pgm.createTable('users', {
     userId: 'id',
     name: { type: 'varchar(100)', notNull: true },
@@ -25,8 +25,12 @@ exports.up = (pgm) => {
       notNull: true,
       references: '"devices"',
     },
-    location: {
-      type: 'point',
+    latitude: {
+      type: 'numeric',
+      notNull: true,
+    },
+    longitude: {
+      type: 'numeric',
       notNull: true,
     },
     altitude: {
@@ -48,4 +52,4 @@ exports.up = (pgm) => {
   });
 };
 
-exports.down = (pgm) => {};
+exports.down = pgm => {};

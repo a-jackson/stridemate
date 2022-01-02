@@ -1,10 +1,14 @@
 import { inject, injectable } from 'inversify';
-import { Client, ClientConfig, Connection } from 'pg';
+import { Client, ClientConfig, QueryResult } from 'pg';
 import { Config } from '../config';
 import TYPES from '../types';
 
+export interface DatabaseClient {
+  query<T>(text: string, params?: any[]): Promise<QueryResult<T>>;
+}
+
 export interface ConnectionManager {
-  getConnection(): Promise<Client>;
+  getClient(): Promise<DatabaseClient>;
 }
 
 @injectable()
@@ -13,7 +17,7 @@ export class ConnectionManagerImpl implements ConnectionManager {
 
   constructor(@inject(TYPES.Config) private config: Config) {}
 
-  public async getConnection() {
+  public async getClient() {
     if (!this.client) {
       this.client = new Client({
         host: this.config.database.host,
