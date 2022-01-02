@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 import { Client, connect } from 'mqtt';
-import { Config } from './config';
-import Types from './types';
+import { Config } from '../config';
+import Types from '../types';
 
 export interface Location {
   user: string;
