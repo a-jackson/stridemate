@@ -5,10 +5,11 @@
     "outDir": "dist",
     "sourceMap": true,
     "lib": ["ES6"],
-    "types": [ "reflect-metadata"],
+    "types": ["reflect-metadata"],
     "moduleResolution": "node",
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+    "esModuleInterop": true
   },
   "files": ["./node_modules/@types/node/index.d.ts"],
   "include": ["src/**/*.ts"],

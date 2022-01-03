@@ -26,7 +26,9 @@ export class LocationRepositoryImpl implements LocationRepository {
 
   public async getAll(): Promise<Location[]> {
     const result = await this.client.query<Location>(
-      `SELECT "locationId", "deviceId", "latitude", "longitude", "altitude", "accuracy", "velocity", "time" FROM locations`,
+      `SELECT "locationId", "deviceId", "latitude", "longitude", "altitude", "accuracy", "velocity", "time" 
+      FROM locations
+      ORDER BY "time" ASC`,
     );
 
     return result.rows;
