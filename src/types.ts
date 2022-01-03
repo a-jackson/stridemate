@@ -5,6 +5,8 @@ let TYPES = {
   UserRepository: Symbol('UserRepository'),
   DeviceRepository: Symbol('DeviceRepository'),
   LocationRepository: Symbol('LocationRepository'),
+  UnitOfWorkFactory: Symbol('UnitOfWorkFactory'),
+  UnitOfWork: Symbol('UnitOfWork'),
 };
 
 export default TYPES;

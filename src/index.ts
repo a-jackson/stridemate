@@ -1,9 +1,7 @@
 import { config as loadDotenv } from 'dotenv';
 import migrate, { RunnerOption } from 'node-pg-migrate';
 import { Config } from './config';
-import { DeviceRepository } from './data/device-repository';
-import { LocationRepository } from './data/location-repository';
-import { UserRepository } from './data/user-repository';
+import { UnitOfWorkFactory } from './data/unit-of-work';
 import { container } from './inversify.config';
 import { Mqtt } from './mqtt/mqtt';
 import TYPES from './types';
@@ -19,39 +17,44 @@ import TYPES from './types';
   } as RunnerOption);
   const mqtt = container.get<Mqtt>(TYPES.Mqtt);
 
+  const unitOfWorkFactory = container.get<UnitOfWorkFactory>(
+    TYPES.UnitOfWorkFactory,
+  );
+
   mqtt.onLocation(async location => {
     console.log(JSON.stringify(location));
-    const userRepo = container.get<UserRepository>(TYPES.UserRepository);
-    const deviceRepo = container.get<DeviceRepository>(TYPES.DeviceRepository);
-    const locationRepo = container.get<LocationRepository>(
-      TYPES.LocationRepository,
-    );
 
-    let user = await userRepo.getByName(location.user);
-    if (!user) {
-      user = await userRepo.insert({ name: location.user });
-    }
+    const unitOfWork = await unitOfWorkFactory.createUnitOfWork();
+    await unitOfWork.complete(async () => {
+      let user = await unitOfWork.userRepository.getByName(location.user);
+      if (!user) {
+        user = await unitOfWork.userRepository.insert({ name: location.user });
+      }
 
-    console.log(JSON.stringify(user));
+      console.log(JSON.stringify(user));
 
-    let device = await deviceRepo.getByName(location.device, user.userId);
-    if (!device) {
-      device = await deviceRepo.insert({
-        name: location.device,
-        userId: user.userId,
+      let device = await unitOfWork.deviceRepository.getByName(
+        location.device,
+        user.userId,
+      );
+      if (!device) {
+        device = await unitOfWork.deviceRepository.insert({
+          name: location.device,
+          userId: user.userId,
+        });
+      }
+
+      console.log(JSON.stringify(device));
+
+      await unitOfWork.locationRepository.insert({
+        deviceId: device.deviceId,
+        latitude: location.lat,
+        longitude: location.lon,
+        altitude: location.alt,
+        accuracy: location.acc,
+        velocity: location.vel,
+        time: location.time,
       });
-    }
-
-    console.log(JSON.stringify(device));
-
-    await locationRepo.insert({
-      deviceId: device.deviceId,
-      latitude: location.lat,
-      longitude: location.lon,
-      altitude: location.alt,
-      accuracy: location.acc,
-      velocity: location.vel,
-      time: location.time,
     });
   });
 

@@ -1,7 +1,6 @@
-import { inject, injectable } from 'inversify';
+import { injectable } from 'inversify';
+import { PoolClient } from 'pg';
 import { Device } from '../models/device';
-import TYPES from '../types';
-import { ConnectionManager } from './connection-manager';
 import { Repository } from './repository';
 
 export interface DeviceRepository extends Repository<Device> {
@@ -10,17 +9,17 @@ export interface DeviceRepository extends Repository<Device> {
 
 @injectable()
 export class DeviceRepositoryImpl implements DeviceRepository {
-  constructor(
-    @inject(TYPES.ConnectionManager)
-    private connectionManager: ConnectionManager,
-  ) {}
+  private client: PoolClient;
+
+  public setClient(client: PoolClient) {
+    this.client = client;
+  }
 
   public async getByName(
     name: string,
     userId: number,
   ): Promise<Device | undefined> {
-    const client = await this.connectionManager.getClient();
-    const result = await client.query<Device>(
+    const result = await this.client.query<Device>(
       `SELECT "deviceId", "name", "userId" FROM devices WHERE "name" = $1 and "userId" = $2`,
       [name, userId],
     );
@@ -31,8 +30,7 @@ export class DeviceRepositoryImpl implements DeviceRepository {
   }
 
   public async getById(entityId: number): Promise<Device> {
-    const client = await this.connectionManager.getClient();
-    const result = await client.query<Device>(
+    const result = await this.client.query<Device>(
       `SELECT "deviceId", "name", "userId" FROM devices WHERE "deviceId" = $1`,
       [entityId],
     );
@@ -43,8 +41,7 @@ export class DeviceRepositoryImpl implements DeviceRepository {
   }
 
   public async getAll(): Promise<Device[]> {
-    const client = await this.connectionManager.getClient();
-    const result = await client.query<Device>(
+    const result = await this.client.query<Device>(
       `SELECT "deviceId", "name", "userId" FROM devices`,
     );
 
@@ -60,8 +57,7 @@ export class DeviceRepositoryImpl implements DeviceRepository {
   }
 
   public async insert(entity: Partial<Device>): Promise<Device> {
-    const client = await this.connectionManager.getClient();
-    const result = await client.query<Device>(
+    const result = await this.client.query<Device>(
       `INSERT INTO devices ( "name", "userId" ) VALUES ( $1, $2 ) RETURNING "deviceId", "name", "userId"`,
       [entity.name, entity.userId],
     );

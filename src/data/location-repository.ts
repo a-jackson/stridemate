@@ -1,21 +1,20 @@
-import { inject, injectable } from 'inversify';
+import { injectable } from 'inversify';
+import { PoolClient } from 'pg';
 import { Location } from '../models/location';
-import TYPES from '../types';
-import { ConnectionManager } from './connection-manager';
 import { Repository } from './repository';
 
 export interface LocationRepository extends Repository<Location> {}
 
 @injectable()
 export class LocationRepositoryImpl implements LocationRepository {
-  constructor(
-    @inject(TYPES.ConnectionManager)
-    private connectionManager: ConnectionManager,
-  ) {}
+  private client: PoolClient;
+
+  public setClient(client: PoolClient) {
+    this.client = client;
+  }
 
   public async getById(entityId: number): Promise<Location> {
-    const client = await this.connectionManager.getClient();
-    const result = await client.query<Location>(
+    const result = await this.client.query<Location>(
       `SELECT "locationId", "deviceId", "latitude", "longitude", "altitude", "accuracy", "velocity", "time" FROM locations WHERE "locationId" = $1`,
       [entityId],
     );
@@ -26,8 +25,7 @@ export class LocationRepositoryImpl implements LocationRepository {
   }
 
   public async getAll(): Promise<Location[]> {
-    const client = await this.connectionManager.getClient();
-    const result = await client.query<Location>(
+    const result = await this.client.query<Location>(
       `SELECT "locationId", "deviceId", "latitude", "longitude", "altitude", "accuracy", "velocity", "time" FROM locations`,
     );
 
@@ -43,8 +41,7 @@ export class LocationRepositoryImpl implements LocationRepository {
   }
 
   public async insert(entity: Partial<Location>): Promise<Location> {
-    const client = await this.connectionManager.getClient();
-    const result = await client.query<Location>(
+    const result = await this.client.query<Location>(
       `INSERT INTO locations ( "deviceId", "latitude", "longitude", "altitude", "accuracy", "velocity", "time" ) 
       VALUES ( $1, $2, $3, $4, $5, $6, $7 ) 
       RETURNING "locationId", "deviceId", "latitude", "longitude", "altitude", "accuracy", "velocity", "time"`,

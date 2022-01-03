@@ -1,7 +1,6 @@
-import { inject, injectable } from 'inversify';
+import { injectable } from 'inversify';
+import { PoolClient } from 'pg';
 import { User } from '../models/user';
-import TYPES from '../types';
-import { ConnectionManager } from './connection-manager';
 import { Repository } from './repository';
 
 export interface UserRepository extends Repository<User> {
@@ -10,14 +9,14 @@ export interface UserRepository extends Repository<User> {
 
 @injectable()
 export class UserRepositoryImpl implements UserRepository {
-  constructor(
-    @inject(TYPES.ConnectionManager)
-    private connectionManager: ConnectionManager,
-  ) {}
+  private client: PoolClient;
+
+  public setClient(client: PoolClient) {
+    this.client = client;
+  }
 
   public async getById(entityId: number): Promise<User | undefined> {
-    const client = await this.connectionManager.getClient();
-    const result = await client.query<User>(
+    const result = await this.client.query<User>(
       `SELECT "userId", "name" FROM users WHERE "userId" = $1`,
       [entityId],
     );
@@ -28,8 +27,7 @@ export class UserRepositoryImpl implements UserRepository {
   }
 
   public async getByName(name: string): Promise<User | undefined> {
-    const client = await this.connectionManager.getClient();
-    const result = await client.query<User>(
+    const result = await this.client.query<User>(
       `SELECT "userId", "name" FROM users WHERE "name" = $1`,
       [name],
     );
@@ -40,9 +38,7 @@ export class UserRepositoryImpl implements UserRepository {
   }
 
   public async getAll(): Promise<User[]> {
-    const client = await this.connectionManager.getClient();
-
-    const result = await client.query<User>(
+    const result = await this.client.query<User>(
       'SELECT "userId", "name" FROM users',
     );
 
@@ -58,8 +54,7 @@ export class UserRepositoryImpl implements UserRepository {
   }
 
   public async insert(entity: Partial<User>): Promise<User> {
-    const client = await this.connectionManager.getClient();
-    const result = await client.query<User>(
+    const result = await this.client.query<User>(
       `INSERT INTO users ( "name" ) VALUES ( $1 ) RETURNING "userId", "name"`,
       [entity.name],
     );

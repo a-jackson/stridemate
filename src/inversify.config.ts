@@ -13,6 +13,11 @@ import {
   LocationRepository,
   LocationRepositoryImpl,
 } from './data/location-repository';
+import {
+  UnitOfWorkFactory,
+  UnitOfWorkFactoryImpl,
+  UnitOfWorkImpl,
+} from './data/unit-of-work';
 import { UserRepository, UserRepositoryImpl } from './data/user-repository';
 import { Mqtt, MqttClient } from './mqtt/mqtt';
 import TYPES from './types';
@@ -24,7 +29,15 @@ container.bind<Mqtt>(TYPES.Mqtt).to(MqttClient).inSingletonScope();
 container
   .bind<ConnectionManager>(TYPES.ConnectionManager)
   .to(ConnectionManagerImpl)
-  .inRequestScope();
+  .inSingletonScope();
+container
+  .bind<UnitOfWorkFactory>(TYPES.UnitOfWorkFactory)
+  .to(UnitOfWorkFactoryImpl)
+  .inSingletonScope();
+container
+  .bind<UnitOfWorkImpl>(TYPES.UnitOfWork)
+  .to(UnitOfWorkImpl)
+  .inTransientScope();
 container
   .bind<UserRepository>(TYPES.UserRepository)
   .to(UserRepositoryImpl)
