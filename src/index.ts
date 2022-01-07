@@ -62,13 +62,13 @@ import TYPES from './types';
 
   mqtt.connect();
 
-  // await findActivities(unitOfWorkFactory);
+  // await findActivities2(unitOfWorkFactory);
 })().catch(e => console.error(e));
 
 const windowSizeMins = 10;
 const boxSizeMeters = 20;
 
-async function findActivities(unitOfWorkFactory: UnitOfWorkFactory) {
+async function findActivities1(unitOfWorkFactory: UnitOfWorkFactory) {
   const unitOfWork = await unitOfWorkFactory.createUnitOfWork();
 
   let locations = await unitOfWork.locationRepository.getAll();
@@ -124,6 +124,27 @@ async function findActivities(unitOfWorkFactory: UnitOfWorkFactory) {
       );
       activityStart = -1;
     }
+  }
+}
+
+async function findActivities2(unitOfWorkFactory: UnitOfWorkFactory) {
+  const unitOfWork = await unitOfWorkFactory.createUnitOfWork();
+
+  let locations = await unitOfWork.locationRepository.getAll();
+  locations = locations.filter(x => x.accuracy < 30);
+  locations = locations.filter(
+    (x, i) => i === 0 || locations[i - 1].time.getTime() !== x.time.getTime(),
+  );
+  const speeds = [];
+  for (let i = 1; i < locations.length - 1; i++) {
+    const last = locations[i - 1];
+    const curr = locations[i];
+
+    const distance = haversine(last, curr, { unit: 'meter' });
+    const time = (curr.time.getTime() - last.time.getTime()) / 1000;
+    const speed = distance / time;
+    speeds.push({ time: curr.time, speed });
+    console.log(`${curr.time.toISOString()},${speed}`);
   }
 }
 
