@@ -7,6 +7,10 @@ let TYPES = {
   LocationRepository: Symbol('LocationRepository'),
   UnitOfWorkFactory: Symbol('UnitOfWorkFactory'),
   UnitOfWork: Symbol('UnitOfWork'),
+  SaveLocations: Symbol('SaveLocations'),
+  Tracker: Symbol('Tracker'),
+  TrackerStateMachine: Symbol('TrackerStateMachine'),
+  DataTracker: Symbol('DataTracker'),
 };
 
 export default TYPES;

@@ -20,6 +20,13 @@ import {
 } from './data/unit-of-work';
 import { UserRepository, UserRepositoryImpl } from './data/user-repository';
 import { Mqtt, MqttClient } from './mqtt/mqtt';
+import { SaveLocations, SaveLocationsImpl } from './save-locations';
+import { DataTracker } from './tracking/data-tracker';
+import { Tracker, TrackerImpl } from './tracking/tracker';
+import {
+  TrackerStateMachine,
+  TrackerStateMachineImpl,
+} from './tracking/tracker-state-machine';
 import TYPES from './types';
 
 const container = new Container();
@@ -50,5 +57,15 @@ container
   .bind<LocationRepository>(TYPES.LocationRepository)
   .to(LocationRepositoryImpl)
   .inTransientScope();
+container
+  .bind<SaveLocations>(TYPES.SaveLocations)
+  .to(SaveLocationsImpl)
+  .inSingletonScope();
+container
+  .bind<TrackerStateMachine>(TYPES.TrackerStateMachine)
+  .to(TrackerStateMachineImpl)
+  .inRequestScope();
+container.bind<Tracker>(TYPES.Tracker).to(TrackerImpl).inSingletonScope();
+container.bind<DataTracker>(TYPES.DataTracker).to(DataTracker).inRequestScope();
 
 export { container };

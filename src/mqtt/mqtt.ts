@@ -6,11 +6,11 @@ import Types from '../types';
 export interface Location {
   user: string;
   device: string;
-  lat: number;
-  lon: number;
-  alt: number;
-  acc: number;
-  vel: number;
+  latitude: number;
+  longitude: number;
+  altitude: number;
+  accuracy: number;
+  velocity: number;
   time: Date;
 }
 
@@ -25,6 +25,7 @@ export interface Mqtt {
 export class MqttClient implements Mqtt {
   private client?: Client;
   private callbacks: OnLocationCallback[] = [];
+  private lastLocation?: Location;
 
   constructor(@inject(Types.Config) private config: Config) {}
 
@@ -65,14 +66,23 @@ export class MqttClient implements Mqtt {
       user,
       device,
       time,
-      acc: message.acc,
-      alt: message.alt,
-      lat: message.lat,
-      lon: message.lon,
-      vel: message.vel,
+      accuracy: message.acc,
+      altitude: message.alt,
+      latitude: message.lat,
+      longitude: message.lon,
+      velocity: message.vel,
     };
 
-    this.callbacks.forEach((callback) => {
+    if (
+      this.lastLocation &&
+      this.lastLocation.time.getTime() === location.time.getTime()
+    ) {
+      return;
+    }
+
+    this.lastLocation = location;
+
+    this.callbacks.forEach(callback => {
       callback(location);
     });
   }
