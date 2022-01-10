@@ -23,7 +23,9 @@ export class EnvConfig implements Config {
       user: process.env.POSTGRES_USER,
       password: process.env.POSTGRES_PASSWORD,
       name: process.env.POSTGRES_DB,
-      port: parseInt(process.env.POSTGRES_PORT) ?? 5432,
+      port: process.env.POSTGRES_PORT
+        ? parseInt(process.env.POSTGRES_PORT)
+        : 5432,
     };
 
     this.databaseUrl = `postgres://${this.database.user}:${this.database.password}@${this.database.host}:${this.database.port}/${this.database.name}`;
