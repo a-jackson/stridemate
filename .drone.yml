@@ -1,0 +1,22 @@
+kind: pipeline
+type: docker
+name: Build Image
+
+steps:
+  - name: build-image
+    image: plugins/docker
+    settings:
+      username:
+        from_secret: Dockerhub_Username
+      password:
+        from_secret: Dockerhub_Token
+      repo:
+        from_secret: Docker_Repo
+      context: .
+      dockerfile: Dockerfile
+      tags: latest
+      no_cache: true
+      auto_label: false
+    when:
+      branch:
+        - master
