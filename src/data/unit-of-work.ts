@@ -2,6 +2,7 @@ import { inject, injectable } from 'inversify';
 import { PoolClient } from 'pg';
 import { container } from '../inversify.config';
 import TYPES from '../types';
+import { ActivityRepository } from './activity-repository';
 import { ConnectionManager } from './connection-manager';
 import { DeviceRepository } from './device-repository';
 import { LocationRepository } from './location-repository';
@@ -32,6 +33,7 @@ export interface UnitOfWork {
   readonly userRepository: UserRepository;
   readonly deviceRepository: DeviceRepository;
   readonly locationRepository: LocationRepository;
+  readonly activityRepository: ActivityRepository;
 
   complete(work: () => Promise<void>): Promise<void>;
   begin(): Promise<void>;
@@ -51,6 +53,8 @@ export class UnitOfWorkImpl implements UnitOfWork {
     public readonly deviceRepository: DeviceRepository,
     @inject(TYPES.LocationRepository)
     public readonly locationRepository: LocationRepository,
+    @inject(TYPES.ActivityRepository)
+    public readonly activityRepository: ActivityRepository,
   ) {}
 
   public setClient(client: PoolClient) {
@@ -58,6 +62,7 @@ export class UnitOfWorkImpl implements UnitOfWork {
     this.userRepository.setClient(client);
     this.deviceRepository.setClient(client);
     this.locationRepository.setClient(client);
+    this.activityRepository.setClient(client);
   }
 
   public async complete(work: () => Promise<void>) {

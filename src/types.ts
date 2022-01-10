@@ -5,6 +5,7 @@ let TYPES = {
   UserRepository: Symbol('UserRepository'),
   DeviceRepository: Symbol('DeviceRepository'),
   LocationRepository: Symbol('LocationRepository'),
+  ActivityRepository: Symbol('ActivityRepository'),
   UnitOfWorkFactory: Symbol('UnitOfWorkFactory'),
   UnitOfWork: Symbol('UnitOfWork'),
   SaveLocations: Symbol('SaveLocations'),

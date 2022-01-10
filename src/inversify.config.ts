@@ -2,6 +2,10 @@ import { Container } from 'inversify';
 import 'reflect-metadata';
 import { Config, EnvConfig } from './config';
 import {
+  ActivityRepository,
+  ActivityRepositoryImpl,
+} from './data/activity-repository';
+import {
   ConnectionManager,
   ConnectionManagerImpl,
 } from './data/connection-manager';
@@ -52,6 +56,10 @@ container
 container
   .bind<DeviceRepository>(TYPES.DeviceRepository)
   .to(DeviceRepositoryImpl)
+  .inTransientScope();
+container
+  .bind<ActivityRepository>(TYPES.ActivityRepository)
+  .to(ActivityRepositoryImpl)
   .inTransientScope();
 container
   .bind<LocationRepository>(TYPES.LocationRepository)

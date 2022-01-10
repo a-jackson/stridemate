@@ -1,6 +1,7 @@
 import { CronJob } from 'cron';
 import haversine from 'haversine';
 import { inject, injectable } from 'inversify';
+import { container } from '../inversify.config';
 import { Location, Mqtt } from '../mqtt/mqtt';
 import TYPES from '../types';
 import { TrackerStateMachine } from './tracker-state-machine';
@@ -14,13 +15,11 @@ export interface Tracker {
 @injectable()
 export class TrackerImpl implements Tracker {
   private job: CronJob;
-  private readonly locations: Location[] = [];
+  private readonly locations: { [device: string]: Location[] } = {};
+  private readonly stateMachines: { [device: string]: TrackerStateMachine } =
+    {};
 
-  constructor(
-    @inject(TYPES.Mqtt) private mqtt: Mqtt,
-    @inject(TYPES.TrackerStateMachine)
-    private stateMachine: TrackerStateMachine,
-  ) {
+  constructor(@inject(TYPES.Mqtt) private mqtt: Mqtt) {
     this.job = new CronJob('0 */1 * * * *', () => this.onTick());
   }
 
@@ -31,19 +30,30 @@ export class TrackerImpl implements Tracker {
 
   private onLocation(location: Location) {
     if (location.accuracy < MaxAccuracy) {
-      this.locations.push(location);
+      const device = `${location.user}/${location.device}`;
+      if (!this.locations[device]) {
+        this.locations[device] = [];
+        this.stateMachines[device] = container.get<TrackerStateMachine>(
+          TYPES.TrackerStateMachine,
+        );
+        this.stateMachines[device].setDevice(location.user, location.device);
+      }
+      this.locations[device].push(location);
     }
   }
 
   private onTick() {
-    const averageSpeed =
-      this.locations.length < 2 ? 0 : this.getAverageSpeed(this.locations);
-    this.stateMachine.newSpeed({
-      speed: averageSpeed,
-      time: new Date(),
-    });
+    for (let device in this.locations) {
+      const locations = this.locations[device];
+      const averageSpeed =
+        locations.length < 2 ? 0 : this.getAverageSpeed(locations);
+      this.stateMachines[device].newSpeed({
+        speed: averageSpeed,
+        time: new Date(),
+      });
 
-    this.locations.length = 0;
+      locations.length = 0;
+    }
   }
 
   private getAverageSpeed(locations: Location[]) {

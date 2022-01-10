@@ -19,6 +19,9 @@ export class DataTracker {
 
     let locations = await unitOfWork.locationRepository.getAll();
     locations = locations.filter(x => x.accuracy < 30 && x.time.getDate() >= 3);
+    if (locations.length === 0) {
+      return;
+    }
 
     let startTime = locations[0].time;
     const minuteLocations = [];
