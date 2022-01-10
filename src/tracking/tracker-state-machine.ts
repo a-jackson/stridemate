@@ -32,6 +32,23 @@ function getActivity(speed: Speed): ActivityDefinition {
   return activity;
 }
 
+function getDistance(speeds: Speed[], endTime?: Date) {
+  let totalDistance = 0;
+  for (let i = 1; i < speeds.length; i++) {
+    const speed = speeds[i];
+    if (endTime && speed.time.getTime() > endTime.getTime()) {
+      break;
+    }
+
+    const lastTime = speeds[i - 1].time.getTime();
+    const timeDiffSeconds = (speed.time.getTime() - lastTime) / 1000;
+
+    totalDistance += speed.speed * timeDiffSeconds;
+  }
+
+  return totalDistance;
+}
+
 export interface TrackerStateMachine {
   newSpeed(speed: Speed): void;
 }
@@ -60,7 +77,7 @@ interface State {
 class IdleState implements State {
   public newSpeed(speed: Speed): State {
     if (speed.speed > Activities[0].maxSpeed) {
-      return new TransitioningState(speed);
+      return new TransitioningState([speed]);
     }
 
     return this;
@@ -70,30 +87,34 @@ class IdleState implements State {
 class TransitioningState implements State {
   private readonly activity: ActivityDefinition;
   private readonly startTime: Date;
-  private readonly speeds: Speed[];
 
-  constructor(speed: Speed) {
-    this.activity = getActivity(speed);
-    this.startTime = speed.time;
-    this.speeds = [speed];
+  constructor(private readonly speeds: Speed[]) {
+    this.activity = getActivity(speeds[0]);
+    this.startTime = speeds[0].time;
   }
 
   public newSpeed(speed: Speed): State {
     this.speeds.push(speed);
-    const activity = getActivity(speed);
-    if (activity.name !== this.activity.name) {
-      return new TransitioningState(speed);
+
+    // Wait 5 minutes before we do anything.
+    const timeSinceStartMs = speed.time.getTime() - this.startTime.getTime();
+    if (timeSinceStartMs < TransitionTimeMs) {
+      return this;
     }
 
-    if (speed.time.getTime() >= this.startTime.getTime() + TransitionTimeMs) {
-      if (this.activity.isIdle) {
-        return new IdleState();
-      }
+    // Get the average speed over the transition period
+    const distanceSinceStart = getDistance(this.speeds);
+    const speedSinceStart = distanceSinceStart / (timeSinceStartMs / 1000);
+    const activitySinceStart = getActivity({
+      speed: speedSinceStart,
+      time: speed.time,
+    });
 
-      return new InActivityState(this.speeds, this.activity, this.startTime);
+    if (activitySinceStart.isIdle) {
+      return new IdleState();
     }
 
-    return this;
+    return new InActivityState(this.speeds, activitySinceStart, this.startTime);
   }
 }
 
@@ -131,7 +152,7 @@ class InActivityState implements State {
     const speedsSinceEnd = this.speeds.filter(
       x => x.time.getTime() >= this.timeActivityEnd.getTime(),
     );
-    const distanceSinceEnd = this.getDistance(speedsSinceEnd);
+    const distanceSinceEnd = getDistance(speedsSinceEnd);
     const speedSinceEnd = distanceSinceEnd / (timeSinceEndMs / 1000);
     const activitySinceEnd = getActivity({
       speed: speedSinceEnd,
@@ -159,27 +180,10 @@ class InActivityState implements State {
       (avgSpeedMpS * 3.6).toFixed(2),
     );
 
-    return new TransitioningState(speed);
+    return new TransitioningState(speedsSinceEnd);
   }
 
   private getTotalDistance() {
-    return this.getDistance(this.speeds, this.timeActivityEnd);
-  }
-
-  private getDistance(speeds: Speed[], endTime?: Date) {
-    let totalDistance = 0;
-    for (let i = 1; i < speeds.length; i++) {
-      const speed = speeds[i];
-      if (endTime && speed.time.getTime() > endTime.getTime()) {
-        break;
-      }
-
-      const lastTime = speeds[i - 1].time.getTime();
-      const timeDiffSeconds = (speed.time.getTime() - lastTime) / 1000;
-
-      totalDistance += speed.speed * timeDiffSeconds;
-    }
-
-    return totalDistance;
+    return getDistance(this.speeds, this.timeActivityEnd);
   }
 }
