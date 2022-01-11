@@ -3,7 +3,7 @@ import { PoolClient } from 'pg';
 import { Activity } from '../models/activity';
 import { Repository } from './repository';
 
-export interface ActivityRepository extends Repository<Activity> {}
+export interface ActivityRepository extends Repository<Activity> { }
 
 @injectable()
 export class ActivityRepositoryImpl implements ActivityRepository {
@@ -15,7 +15,7 @@ export class ActivityRepositoryImpl implements ActivityRepository {
 
   public async getById(entityId: number): Promise<Activity> {
     const result = await this.client.query<Activity>(
-      `SELECT "activityId", "startTime", "endTime"
+      `SELECT "activityId", "startTime", "endTime",
       "distanceKm", "avgSpeedKm", "deviceId" 
       FROM activities WHERE "activityId" = $1`,
       [entityId],
@@ -28,7 +28,7 @@ export class ActivityRepositoryImpl implements ActivityRepository {
 
   public async getAll(): Promise<Activity[]> {
     const result = await this.client.query<Activity>(
-      `SELECT "activityId", "startTime", "endTime"
+      `SELECT "activityId", "startTime", "endTime",
       "distanceKm", "avgSpeedKm", "deviceId" 
       FROM activities`,
     );
@@ -47,11 +47,11 @@ export class ActivityRepositoryImpl implements ActivityRepository {
   public async insert(entity: Partial<Activity>): Promise<Activity> {
     const result = await this.client.query<Activity>(
       `INSERT INTO activities
-      ( "startTime", "endTime"
+      ( "startTime", "endTime",
       "distanceKm", "avgSpeedKm", "deviceId" )
       VALUES
       ( $1, $2, $3, $4, $5 ) 
-      RETURNING "activityId", "startTime", "endTime"
+      RETURNING "activityId", "startTime", "endTime",
       "distanceKm", "avgSpeedKm", "deviceId"`,
       [
         entity.startTime,
