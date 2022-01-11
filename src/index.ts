@@ -28,7 +28,7 @@ import TYPES from './types';
   mqtt.connect();
 
   const dataTracker = container.get<DataTracker>(TYPES.DataTracker);
-  await dataTracker.run();
+  // await dataTracker.run();
 })()
   .catch(e => console.error(e))
   .then(() => console.log('done'));

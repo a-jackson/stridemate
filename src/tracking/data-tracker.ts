@@ -12,7 +12,9 @@ export class DataTracker {
     private unitOfWorkFactory: UnitOfWorkFactory,
     @inject(TYPES.TrackerStateMachine)
     private stateMachine: TrackerStateMachine,
-  ) {}
+  ) {
+    this.stateMachine.setDevice("andrew", "pixel2xl");
+  }
 
   public async run() {
     const unitOfWork = await this.unitOfWorkFactory.createUnitOfWork();
