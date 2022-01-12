@@ -12,7 +12,7 @@
   "scripts": {
     "build": "tsc",
     "migrate": "node-pg-migrate",
-    "debug": "node -r ts-node/register --inspect=0.0.0.0:9229 src/index.ts"
+    "debug": "ts-node src/index.ts"
   },
   "dependencies": {
     "cron": "^1.8.2",
