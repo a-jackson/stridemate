@@ -43,7 +43,7 @@ export class TrackerImpl implements Tracker {
   }
 
   private onTick() {
-    for (let device in this.locations) {
+    for (const device in this.locations) {
       const locations = this.locations[device];
       const averageSpeed =
         locations.length < 2 ? 0 : this.getAverageSpeed(locations);

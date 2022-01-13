@@ -3,7 +3,7 @@ import { PoolClient } from 'pg';
 import { Activity } from '../models/activity';
 import { Repository } from './repository';
 
-export interface ActivityRepository extends Repository<Activity> { }
+export type ActivityRepository = Repository<Activity>
 
 @injectable()
 export class ActivityRepositoryImpl implements ActivityRepository {

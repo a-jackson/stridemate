@@ -1,4 +1,4 @@
-let TYPES = {
+const TYPES = {
   Config: Symbol('Config'),
   Mqtt: Symbol('Mqtt'),
   ConnectionManager: Symbol('ConnectionManager'),

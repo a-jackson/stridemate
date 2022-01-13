@@ -27,7 +27,7 @@ export class DataTracker {
 
     let startTime = locations[0].time;
     const minuteLocations = [];
-    for (let location of locations) {
+    for (const location of locations) {
       if (minuteLocations.length === 0) {
         startTime = location.time;
       }
