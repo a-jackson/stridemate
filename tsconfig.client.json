@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "outDir": "dist",
+    "sourceMap": true,
+    "moduleResolution": "node",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
+    "jsx": "preserve",
+    "importHelpers": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "strict": true,
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "lib": ["es6", "dom", "DOM.Iterable", "ScriptHost"],
+    "types": [
+      "@vue/compiler-core/dist/compiler-core",
+      "@vue/compiler-dom/dist/compiler-dom",
+      "@vue/compiler-sfc/dist/compiler-sfc",
+      "@vue/compiler-ssr/dist/compiler-ssr",
+      "@vue/reactivity/dist/reactivity",
+      "@vue/runtime-core/dist/runtime-core",
+      "@vue/runtime-dom/dist/runtime-dom"
+    ]
+  },
+  "files": ["./node_modules/@types/node/index.d.ts"],
+  "include": [
+    "src/client/**/*.ts",
+    "src/client/**/*.tsx",
+    "src/client/**/*.vue"
+  ],
+  "exclude": ["node_modules"]
+}

@@ -10,28 +10,46 @@
     "type": "git"
   },
   "scripts": {
-    "build": "tsc",
-    "migrate": "node-pg-migrate",
-    "debug": "ts-node src/index.ts"
+    "build:client": "webpack --env=production",
+    "build:server": "tsc",
+    "build": "npm run build:server && npm run build:client",
+    "debug": "export NODE_ENV=\"development\" && ts-node src/index.ts",
+    "migrate": "node-pg-migrate"
   },
   "dependencies": {
     "cron": "^1.8.2",
     "dotenv": "^10.0.0",
+    "express": "^4.17.2",
     "haversine": "^1.1.1",
     "inversify": "^6.0.1",
     "mqtt": "^4.3.2",
     "node-pg-migrate": "^6.2.0",
     "pg": "^8.7.1",
-    "reflect-metadata": "^0.1.13"
+    "reflect-metadata": "^0.1.13",
+    "vue": "^3.2.26",
+    "vue-router": "^4.0.12"
   },
   "devDependencies": {
     "@types/cron": "^1.7.3",
+    "@types/express": "^4.17.13",
     "@types/haversine": "^1.1.5",
     "@types/node": "^17.0.6",
+    "babel-loader": "^8.2.3",
+    "clean-webpack-plugin": "^4.0.0",
+    "css-loader": "^6.5.1",
     "eslint": "^8.6.0",
     "eslint-config-prettier": "^8.3.0",
+    "html-webpack-plugin": "^5.5.0",
+    "mini-css-extract-plugin": "2.4.5",
     "prettier": "^2.5.1",
+    "ts-loader": "^9.2.6",
     "ts-node": "^10.4.0",
-    "typescript": "^4.5.4"
+    "typescript": "^4.5.4",
+    "vue-loader": "^17.0.0",
+    "webpack": "^5.66.0",
+    "webpack-cli": "^4.9.1",
+    "webpack-dev-middleware": "^5.3.0",
+    "webpack-dev-server": "^4.7.3",
+    "webpackbar": "^5.0.2"
   }
 }

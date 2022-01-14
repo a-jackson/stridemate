@@ -4,6 +4,7 @@ import { Config } from './config';
 import { container } from './inversify.config';
 import { Mqtt } from './mqtt/mqtt';
 import { SaveLocations } from './save-locations';
+import './server';
 import { DataTracker } from './tracking/data-tracker';
 import { Tracker } from './tracking/tracker';
 import TYPES from './types';

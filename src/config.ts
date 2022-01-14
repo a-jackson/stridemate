@@ -8,7 +8,7 @@ export class EnvConfig implements Config {
 
   constructor() {
     this.mqtt = {
-      url: process.env.MQTT_URL,
+      url: process.env.MQTT_URL || '',
       user: process.env.MQTT_USER,
       password: process.env.MQTT_PASSWORD,
       baseTopic: process.env.MQTT_BASE_TOPIC || 'owntracks',
@@ -19,10 +19,10 @@ export class EnvConfig implements Config {
     }
 
     this.database = {
-      host: process.env.POSTGRES_HOST,
-      user: process.env.POSTGRES_USER,
-      password: process.env.POSTGRES_PASSWORD,
-      name: process.env.POSTGRES_DB,
+      host: process.env.POSTGRES_HOST || '',
+      user: process.env.POSTGRES_USER || '',
+      password: process.env.POSTGRES_PASSWORD || '',
+      name: process.env.POSTGRES_DB || '',
       port: process.env.POSTGRES_PORT
         ? parseInt(process.env.POSTGRES_PORT)
         : 5432,

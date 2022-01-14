@@ -17,7 +17,8 @@ WORKDIR /app
 # Copy the package json and dist folder from build
 COPY --from=build /app/package.json /app/package.json
 COPY --from=build /app/package-lock.json /app/package-lock.json
-COPY --from=build /app/dist /app/dist
+COPY --from=build /app/dist/server /app/dist
+COPY --from=build /app/dist/client /app/dist/public
 COPY --from=build /app/migrations /app/migrations
 
 # Only install production modules.

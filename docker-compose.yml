@@ -5,6 +5,8 @@ services:
     image: ajackson3/activity-tracker
     depends_on:
       - db
+    ports:
+      - '3001:3000'
     environment:
       MQTT_URL: ${MQTT_URL}
       MQTT_USER: ${MQTT_USER}
