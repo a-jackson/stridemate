@@ -11,9 +11,9 @@
   },
   "scripts": {
     "build:client": "webpack --env=production",
-    "build:server": "tsc",
+    "build:server": "tsc -p tsconfig.server.json",
     "build": "npm run build:server && npm run build:client",
-    "debug": "export NODE_ENV=\"development\" && ts-node src/index.ts",
+    "debug": "export NODE_ENV=\"development\" && ts-node -P tsconfig.server.json src/index.ts",
     "migrate": "node-pg-migrate"
   },
   "dependencies": {

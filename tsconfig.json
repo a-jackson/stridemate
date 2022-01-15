@@ -2,7 +2,6 @@
   "compilerOptions": {
     "target": "es6",
     "module": "commonjs",
-    "outDir": "dist/server",
     "sourceMap": true,
     "lib": ["ES6"],
     "types": ["reflect-metadata"],
@@ -12,6 +11,6 @@
     "esModuleInterop": true
   },
   "files": ["./node_modules/@types/node/index.d.ts"],
-  "include": ["src/**/*.ts", "types.d.ts", "src/client/shims-vue.d.ts"],
-  "exclude": ["src/client/**/*.ts", "node_modules"]
+  "include": ["src/**/*.ts", "src/**/*.vue", "types.d.ts"],
+  "exclude": ["node_modules"]
 }

@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist/server"
+  },
+  "files": ["./node_modules/@types/node/index.d.ts"],
+  "include": ["src/**/*.ts", "types.d.ts"],
+  "exclude": ["src/client/**/*.ts"]
+}
