@@ -4,7 +4,6 @@ import { Config } from './config';
 import { container } from './inversify.config';
 import { Mqtt } from './mqtt/mqtt';
 import { SaveLocations } from './save-locations';
-import './server';
 import { DataTracker } from './tracking/data-tracker';
 import { Tracker } from './tracking/tracker';
 import TYPES from './types';
@@ -30,6 +29,8 @@ import TYPES from './types';
 
   const dataTracker = container.get<DataTracker>(TYPES.DataTracker);
   // await dataTracker.run();
+
+  await import('./server');
 })()
   .catch(e => console.error(e))
   .then(() => console.log('done'));

@@ -12,6 +12,6 @@
     "esModuleInterop": true
   },
   "files": ["./node_modules/@types/node/index.d.ts"],
-  "include": ["src/**/*.ts", "types.d.ts"],
+  "include": ["src/**/*.ts", "types.d.ts", "src/client/shims-vue.d.ts"],
   "exclude": ["src/client/**/*.ts", "node_modules"]
 }
