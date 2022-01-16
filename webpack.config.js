@@ -12,11 +12,12 @@ module.exports = (env = {}) => ({
   mode: env.production ? 'production' : 'development',
   entry: {
     app: './app.ts',
+    hot: 'webpack-hot-middleware/client',
   },
   output: {
     path: path.resolve(__dirname, 'dist/client'),
     filename: '[name].[chunkhash].bundle.js',
-    publicPath: process.env.BASE_URL,
+    publicPath: '/',
   },
   module: {
     rules: [

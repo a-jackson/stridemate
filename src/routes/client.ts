@@ -5,15 +5,19 @@ export async function useClient(app: express.Application) {
   if (process.env.NODE_ENV == 'development') {
     const webpack = await import('webpack');
     const webpackDevMiddleware = await import('webpack-dev-middleware');
-    const config = await import('../../webpack.config.js');
+    const webpackHotMiddleware = await import('webpack-hot-middleware');
+    const configImport = await import('../../webpack.config.js');
 
-    const devConfig = config.default('development');
-    const compiler = webpack.webpack(devConfig);
+    const config = configImport.default('development');
+    config.plugins.push(new webpack.HotModuleReplacementPlugin());
+
+    const compiler = webpack.webpack(config);
     app.use(
       webpackDevMiddleware.default(compiler, {
         publicPath: '/',
       }),
     );
+    app.use(webpackHotMiddleware.default(compiler));
   } else {
     app.use(express.static(path.join(__dirname, '../public')));
 
