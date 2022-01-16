@@ -10,10 +10,17 @@ const { VueLoaderPlugin } = require('vue-loader');
 module.exports = (env = {}) => ({
   context: path.resolve(__dirname, 'src/client'),
   mode: env.production ? 'production' : 'development',
-  entry: {
-    app: './app.ts',
-    hot: 'webpack-hot-middleware/client',
-  },
+  entry:
+    env == 'development'
+      ? {
+          app: './app.ts',
+          hot: 'webpack-hot-middleware/client',
+          bulma: 'bulma',
+        }
+      : {
+          app: './app.ts',
+          bulma: 'bulma',
+        },
   output: {
     path: path.resolve(__dirname, 'dist/client'),
     filename: '[name].[chunkhash].bundle.js',
@@ -96,7 +103,7 @@ module.exports = (env = {}) => ({
   devServer: {
     static: {
       directory: path.join(__dirname, 'src/client/public'),
-      publicPath: process.env.BASE_URL,
+      publicPath: '/',
       serveIndex: true,
     },
     hot: true,
