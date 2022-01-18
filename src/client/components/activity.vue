@@ -14,11 +14,11 @@
       <span>{{ duration.toFixed(0) }} min</span>
     </div>
     <div class="ml-2">
-      <span>{{ new Date(activity.startTime).toLocaleString() }}</span>
+      <span>{{ date }}</span>
     </div>
     <div class="ml-2">
-      <button class="button is-primary is-inverted">
-        <span class="icon is-small" title="View Map">
+      <button class="button is-primary is-inverted" title="View Map">
+        <span class="icon is-small">
           <font-awesome-icon icon="map-marked-alt"></font-awesome-icon>
         </span>
       </button>
@@ -34,6 +34,16 @@ import { Activity as IActivity } from '../../models/activity';
 @Options({})
 export default class Activity extends Vue {
   @Prop() public activity!: IActivity;
+
+  private dateTimeFormat = new Intl.DateTimeFormat('en-GB', {
+    // dateStyle: 'short',
+    // timeStyle: 'short',
+    year: '2-digit',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
   public get icon() {
     switch (this.activity.name) {
@@ -53,42 +63,9 @@ export default class Activity extends Vue {
 
     return time / 1000 / 60;
   }
+
+  public get date() {
+    return this.dateTimeFormat.format(new Date(this.activity.startTime));
+  }
 }
 </script>
-
-<style lang="scss">
-// .activity {
-//   // display: grid;
-//   grid-template-areas:
-//     'title title . date'
-//     'distance speed duration buttons';
-//   grid-template-columns: 1fr 1fr 1fr 1fr;
-//   grid-gap: 1rem;
-
-//   &__title {
-//     grid-area: title;
-//   }
-
-//   &__date {
-//     grid-area: date;
-//     justify-self: right;
-//   }
-
-//   &__distance {
-//     grid-area: distance;
-//   }
-
-//   &__speed {
-//     grid-area: speed;
-//   }
-
-//   &__duration {
-//     grid-area: duration;
-//   }
-
-//   &__buttons {
-//     grid-area: buttons;
-//     justify-self: right;
-//   }
-// }
-</style>
