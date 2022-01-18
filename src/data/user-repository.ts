@@ -1,4 +1,3 @@
-import { injectable } from 'inversify';
 import { PoolClient } from 'pg';
 import { User } from '../models/user';
 import { Repository } from './repository';
@@ -7,13 +6,8 @@ export interface UserRepository extends Repository<User> {
   getByName(name: string): Promise<User | undefined>;
 }
 
-@injectable()
 export class UserRepositoryImpl implements UserRepository {
-  private client: PoolClient;
-
-  public setClient(client: PoolClient) {
-    this.client = client;
-  }
+  constructor(private client: PoolClient) {}
 
   public async getById(entityId: number): Promise<User | undefined> {
     const result = await this.client.query<User>(

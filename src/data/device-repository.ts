@@ -1,4 +1,3 @@
-import { injectable } from 'inversify';
 import { PoolClient } from 'pg';
 import { Device } from '../models/device';
 import { Repository } from './repository';
@@ -7,13 +6,8 @@ export interface DeviceRepository extends Repository<Device> {
   getByName(name: string, userId: number): Promise<Device | undefined>;
 }
 
-@injectable()
 export class DeviceRepositoryImpl implements DeviceRepository {
-  private client: PoolClient;
-
-  public setClient(client: PoolClient) {
-    this.client = client;
-  }
+  constructor(private client: PoolClient) {}
 
   public async getByName(
     name: string,

@@ -1,23 +1,52 @@
-import { injectable } from 'inversify';
 import { PoolClient } from 'pg';
+import { pg as sql } from 'yesql';
 import { Activity } from '../models/activity';
+import { ActivityFilter } from '../models/activity-filter';
 import { Repository } from './repository';
 
-export type ActivityRepository = Repository<Activity>
+export interface ActivityRepository extends Repository<Activity> {
+  getByFilter(filter: ActivityFilter);
+}
 
-@injectable()
 export class ActivityRepositoryImpl implements ActivityRepository {
-  private client: PoolClient;
+  constructor(private client: PoolClient) {}
 
-  public setClient(client: PoolClient) {
-    this.client = client;
+  public async getByFilter(filter: ActivityFilter) {
+    let query = `SELECT "activityId", activities."name", "startTime", 
+      "endTime", "distanceKm", "avgSpeedKm", activities."deviceId", devices."name" AS "device"
+      FROM activities
+      INNER JOIN devices ON activities."deviceId" = devices."deviceId"
+      WHERE 1 = 1 `;
+    if (filter.userId) {
+      query += `AND "userId" = :userId `;
+    }
+
+    if (!filter.sortOrder) {
+      filter.sortOrder = 'desc';
+    }
+
+    query += `ORDER BY "startTime" ${filter.sortOrder} `;
+
+    if (filter.limit) {
+      query += `LIMIT :limit `;
+    }
+    if (filter.offset) {
+      query += `OFFSET :offset `;
+    }
+
+    const statement = sql(query)(filter);
+    const result = await this.client.query<Activity>(statement);
+
+    return result.rows;
   }
 
   public async getById(entityId: number): Promise<Activity> {
     const result = await this.client.query<Activity>(
-      `SELECT "activityId", "name", "startTime", "endTime",
-      "distanceKm", "avgSpeedKm", "deviceId" 
-      FROM activities WHERE "activityId" = $1`,
+      `SELECT "activityId", activities."name", "startTime", 
+      "endTime", "distanceKm", "avgSpeedKm", activities."deviceId", devices."name" AS "device"
+      FROM activities
+      INNER JOIN devices ON activities."deviceId" = devices."deviceId"
+      WHERE "activityId" = $1`,
       [entityId],
     );
 
@@ -28,9 +57,10 @@ export class ActivityRepositoryImpl implements ActivityRepository {
 
   public async getAll(): Promise<Activity[]> {
     const result = await this.client.query<Activity>(
-      `SELECT "activityId", "name", "startTime", "endTime",
-      "distanceKm", "avgSpeedKm", "deviceId" 
-      FROM activities`,
+      `SELECT "activityId", activities."name", "startTime", 
+      "endTime", "distanceKm", "avgSpeedKm", activities."deviceId", devices."name" AS "device"
+      FROM activities
+      INNER JOIN devices ON activities."deviceId" = devices."deviceId"`,
     );
 
     return result.rows;

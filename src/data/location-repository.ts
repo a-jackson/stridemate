@@ -1,17 +1,11 @@
-import { injectable } from 'inversify';
 import { PoolClient } from 'pg';
 import { Location } from '../models/location';
 import { Repository } from './repository';
 
-export type LocationRepository = Repository<Location>
+export type LocationRepository = Repository<Location>;
 
-@injectable()
 export class LocationRepositoryImpl implements LocationRepository {
-  private client: PoolClient;
-
-  public setClient(client: PoolClient) {
-    this.client = client;
-  }
+  constructor(private client: PoolClient) {}
 
   public async getById(entityId: number): Promise<Location> {
     const result = await this.client.query<Location>(

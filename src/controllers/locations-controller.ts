@@ -8,11 +8,10 @@ import {
   response,
 } from 'inversify-express-utils';
 import { UnitOfWorkFactory } from '../data/unit-of-work';
-import { ActivityFilter } from '../models/activity-filter';
 import TYPES from '../types';
 
-@controller('/api/activities')
-export class ActivitiesController implements interfaces.Controller {
+@controller('/api/locations')
+export class LocationsController implements interfaces.Controller {
   constructor(
     @inject(TYPES.UnitOfWorkFactory)
     private unitOfWorkFactory: UnitOfWorkFactory,
@@ -23,8 +22,7 @@ export class ActivitiesController implements interfaces.Controller {
     @request() req: express.Request,
     @response() res: express.Response,
   ) {
-    const filter = req.query as ActivityFilter;
     const unitOfWork = await this.unitOfWorkFactory.createUnitOfWork();
-    return await unitOfWork.activityRepository.getByFilter(filter);
+    return await unitOfWork.locationRepository.getAll();
   }
 }

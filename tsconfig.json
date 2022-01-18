@@ -3,7 +3,7 @@
     "target": "es6",
     "module": "commonjs",
     "sourceMap": true,
-    "lib": ["ES6"],
+    "lib": ["es6", "dom", "DOM.Iterable", "ScriptHost"],
     "types": ["reflect-metadata"],
     "moduleResolution": "node",
     "experimentalDecorators": true,

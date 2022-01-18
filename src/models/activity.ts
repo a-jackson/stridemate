@@ -6,4 +6,5 @@ export interface Activity {
   distanceKm: number;
   avgSpeedKm: number;
   deviceId: number;
+  device: string;
 }

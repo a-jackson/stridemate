@@ -2,30 +2,12 @@ import { Container } from 'inversify';
 import 'reflect-metadata';
 import { Config, EnvConfig } from './config';
 import {
-  ActivityRepository,
-  ActivityRepositoryImpl,
-} from './data/activity-repository';
-import {
   ConnectionManager,
   ConnectionManagerImpl,
 } from './data/connection-manager';
-import {
-  DeviceRepository,
-  DeviceRepositoryImpl,
-} from './data/device-repository';
-import {
-  LocationRepository,
-  LocationRepositoryImpl,
-} from './data/location-repository';
-import {
-  UnitOfWorkFactory,
-  UnitOfWorkFactoryImpl,
-  UnitOfWorkImpl,
-} from './data/unit-of-work';
-import { UserRepository, UserRepositoryImpl } from './data/user-repository';
+import { UnitOfWorkFactory, UnitOfWorkFactoryImpl } from './data/unit-of-work';
 import { Mqtt, MqttClient } from './mqtt/mqtt';
-import { SaveLocations, SaveLocationsImpl } from './save-locations';
-import { DataTracker } from './tracking/data-tracker';
+import { SaveLocations, SaveLocationsImpl } from './tracking/save-locations';
 import { Tracker, TrackerImpl } from './tracking/tracker';
 import {
   TrackerStateMachine,
@@ -46,26 +28,6 @@ container
   .to(UnitOfWorkFactoryImpl)
   .inSingletonScope();
 container
-  .bind<UnitOfWorkImpl>(TYPES.UnitOfWork)
-  .to(UnitOfWorkImpl)
-  .inTransientScope();
-container
-  .bind<UserRepository>(TYPES.UserRepository)
-  .to(UserRepositoryImpl)
-  .inTransientScope();
-container
-  .bind<DeviceRepository>(TYPES.DeviceRepository)
-  .to(DeviceRepositoryImpl)
-  .inTransientScope();
-container
-  .bind<ActivityRepository>(TYPES.ActivityRepository)
-  .to(ActivityRepositoryImpl)
-  .inTransientScope();
-container
-  .bind<LocationRepository>(TYPES.LocationRepository)
-  .to(LocationRepositoryImpl)
-  .inTransientScope();
-container
   .bind<SaveLocations>(TYPES.SaveLocations)
   .to(SaveLocationsImpl)
   .inSingletonScope();
@@ -74,6 +36,5 @@ container
   .to(TrackerStateMachineImpl)
   .inRequestScope();
 container.bind<Tracker>(TYPES.Tracker).to(TrackerImpl).inSingletonScope();
-container.bind<DataTracker>(TYPES.DataTracker).to(DataTracker).inRequestScope();
 
 export { container };

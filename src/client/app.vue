@@ -32,6 +32,12 @@
             <span>{{ route.name }}</span></router-link
           >
         </div>
+        <div class="navbar-end">
+          <div class="navbar-item">
+            <span class="mr-2">User:</span>
+            <user-selector></user-selector>
+          </div>
+        </div>
       </div>
     </div>
   </nav>
@@ -39,9 +45,15 @@
 </template>
 
 <script lang="ts">
-import { Vue } from 'vue-class-component';
+import { Options, Vue } from 'vue-class-component';
+import UserSelector from './components/user-selector.vue';
 import { router } from './router';
 
+@Options({
+  components: {
+    UserSelector,
+  },
+})
 export default class App extends Vue {
   public routes = router.getRoutes();
   public isMenuActive = false;

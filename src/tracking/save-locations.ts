@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
-import { UnitOfWorkFactory } from './data/unit-of-work';
-import { Location, Mqtt } from './mqtt/mqtt';
-import TYPES from './types';
+import { UnitOfWorkFactory } from '../data/unit-of-work';
+import { Location, Mqtt } from '../mqtt/mqtt';
+import TYPES from '../types';
 
 export interface SaveLocations {
   start(): void;

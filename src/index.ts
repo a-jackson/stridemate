@@ -3,8 +3,7 @@ import migrate, { RunnerOption } from 'node-pg-migrate';
 import { Config } from './config';
 import { container } from './inversify.config';
 import { Mqtt } from './mqtt/mqtt';
-import { SaveLocations } from './save-locations';
-import { DataTracker } from './tracking/data-tracker';
+import { SaveLocations } from './tracking/save-locations';
 import { Tracker } from './tracking/tracker';
 import TYPES from './types';
 
@@ -27,10 +26,5 @@ import TYPES from './types';
   const mqtt = container.get<Mqtt>(TYPES.Mqtt);
   mqtt.connect();
 
-  const dataTracker = container.get<DataTracker>(TYPES.DataTracker);
-  // await dataTracker.run();
-
   await import('./server');
-})()
-  .catch(e => console.error(e))
-  .then(() => console.log('done'));
+})().catch(e => console.error(e));

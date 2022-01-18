@@ -1,12 +1,17 @@
 import { inject, injectable } from 'inversify';
 import { PoolClient } from 'pg';
-import { container } from '../inversify.config';
 import TYPES from '../types';
-import { ActivityRepository } from './activity-repository';
+import {
+  ActivityRepository,
+  ActivityRepositoryImpl,
+} from './activity-repository';
 import { ConnectionManager } from './connection-manager';
-import { DeviceRepository } from './device-repository';
-import { LocationRepository } from './location-repository';
-import { UserRepository } from './user-repository';
+import { DeviceRepository, DeviceRepositoryImpl } from './device-repository';
+import {
+  LocationRepository,
+  LocationRepositoryImpl,
+} from './location-repository';
+import { UserRepository, UserRepositoryImpl } from './user-repository';
 
 export interface UnitOfWorkFactory {
   createUnitOfWork(): Promise<UnitOfWork>;
@@ -22,8 +27,7 @@ export class UnitOfWorkFactoryImpl implements UnitOfWorkFactory {
   public async createUnitOfWork(): Promise<UnitOfWork> {
     const client = await this.connectionManager.getClient();
 
-    const unitOfWork = container.get<UnitOfWorkImpl>(TYPES.UnitOfWork);
-    unitOfWork.setClient(client);
+    const unitOfWork = new UnitOfWorkImpl(client);
 
     return unitOfWork;
   }
@@ -42,27 +46,17 @@ export interface UnitOfWork {
   release(): void;
 }
 
-@injectable()
 export class UnitOfWorkImpl implements UnitOfWork {
-  private client: PoolClient;
+  public readonly userRepository: UserRepository;
+  public readonly deviceRepository: DeviceRepository;
+  public readonly locationRepository: LocationRepository;
+  public readonly activityRepository: ActivityRepository;
 
-  constructor(
-    @inject(TYPES.UserRepository)
-    public readonly userRepository: UserRepository,
-    @inject(TYPES.DeviceRepository)
-    public readonly deviceRepository: DeviceRepository,
-    @inject(TYPES.LocationRepository)
-    public readonly locationRepository: LocationRepository,
-    @inject(TYPES.ActivityRepository)
-    public readonly activityRepository: ActivityRepository,
-  ) {}
-
-  public setClient(client: PoolClient) {
-    this.client = client;
-    this.userRepository.setClient(client);
-    this.deviceRepository.setClient(client);
-    this.locationRepository.setClient(client);
-    this.activityRepository.setClient(client);
+  constructor(private client: PoolClient) {
+    this.userRepository = new UserRepositoryImpl(this.client);
+    this.deviceRepository = new DeviceRepositoryImpl(this.client);
+    this.locationRepository = new LocationRepositoryImpl(this.client);
+    this.activityRepository = new ActivityRepositoryImpl(this.client);
   }
 
   public async complete(work: () => Promise<void>) {

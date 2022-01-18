@@ -10,7 +10,6 @@
     "paths": {
       "@/*": ["src/*"]
     },
-    "lib": ["es6", "dom", "DOM.Iterable", "ScriptHost"],
     "types": [
       "@vue/compiler-core/dist/compiler-core",
       "@vue/compiler-dom/dist/compiler-dom",

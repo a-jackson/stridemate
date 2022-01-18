@@ -1,6 +1,6 @@
 // Import the express in typescript file
 import { InversifyExpressServer } from 'inversify-express-utils';
-import './controllers/activities-controller';
+import './controllers';
 import { container } from './inversify.config';
 import { useClient } from './routes/client';
 
