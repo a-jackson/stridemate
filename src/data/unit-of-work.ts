@@ -3,13 +3,13 @@ import { PoolClient } from 'pg';
 import TYPES from '../types';
 import {
   ActivityRepository,
-  ActivityRepositoryImpl,
+  ActivityRepositoryImpl
 } from './activity-repository';
 import { ConnectionManager } from './connection-manager';
 import { DeviceRepository, DeviceRepositoryImpl } from './device-repository';
 import {
   LocationRepository,
-  LocationRepositoryImpl,
+  LocationRepositoryImpl
 } from './location-repository';
 import { UserRepository, UserRepositoryImpl } from './user-repository';
 
@@ -22,7 +22,7 @@ export class UnitOfWorkFactoryImpl implements UnitOfWorkFactory {
   constructor(
     @inject(TYPES.ConnectionManager)
     private connectionManager: ConnectionManager,
-  ) {}
+  ) { }
 
   public async createUnitOfWork(): Promise<UnitOfWork> {
     const client = await this.connectionManager.getClient();
@@ -39,7 +39,7 @@ export interface UnitOfWork {
   readonly locationRepository: LocationRepository;
   readonly activityRepository: ActivityRepository;
 
-  complete(work: () => Promise<void>): Promise<void>;
+  complete<T>(work: (unitOfWork: UnitOfWork) => Promise<T>): Promise<T>;
   begin(): Promise<void>;
   commit(): Promise<void>;
   rollback(): Promise<void>;
@@ -47,23 +47,39 @@ export interface UnitOfWork {
 }
 
 export class UnitOfWorkImpl implements UnitOfWork {
-  public readonly userRepository: UserRepository;
-  public readonly deviceRepository: DeviceRepository;
-  public readonly locationRepository: LocationRepository;
-  public readonly activityRepository: ActivityRepository;
+  private _userRepository?: UserRepository;
+  private _deviceRepository?: DeviceRepository;
+  private _locationRepository?: LocationRepository;
+  private _activityRepository?: ActivityRepository;
 
   constructor(private client: PoolClient) {
-    this.userRepository = new UserRepositoryImpl(this.client);
-    this.deviceRepository = new DeviceRepositoryImpl(this.client);
-    this.locationRepository = new LocationRepositoryImpl(this.client);
-    this.activityRepository = new ActivityRepositoryImpl(this.client);
   }
 
-  public async complete(work: () => Promise<void>) {
+  public get userRepository() {
+    return this._userRepository
+      ??= new UserRepositoryImpl(this.client);
+  }
+
+  public get deviceRepository() {
+    return this._deviceRepository
+      ??= new DeviceRepositoryImpl(this.client);
+  }
+  public get locationRepository() {
+    return this._locationRepository
+      ??= new LocationRepositoryImpl(this.client);
+  }
+  public get activityRepository() {
+    return this._activityRepository
+      ??= new ActivityRepositoryImpl(this.client);
+  }
+
+  public async complete<T>(work: (unitOfWork: UnitOfWork) => Promise<T>): Promise<T> {
     try {
       await this.begin();
-      await work();
+      const result
+        = await work(this);
       await this.commit();
+      return result;
     } catch (e) {
       await this.rollback();
       throw e;

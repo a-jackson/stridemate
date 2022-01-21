@@ -13,7 +13,7 @@ export class SaveLocationsImpl implements SaveLocations {
     @inject(TYPES.Mqtt) private mqtt: Mqtt,
     @inject(TYPES.UnitOfWorkFactory)
     private unitOfWorkFactory: UnitOfWorkFactory,
-  ) {}
+  ) { }
 
   public start() {
     this.mqtt.onLocation(x => this.saveLocation(x));
@@ -21,24 +21,24 @@ export class SaveLocationsImpl implements SaveLocations {
 
   private async saveLocation(location: Location) {
     const unitOfWork = await this.unitOfWorkFactory.createUnitOfWork();
-    await unitOfWork.complete(async () => {
-      let user = await unitOfWork.userRepository.getByName(location.user);
+    await unitOfWork.complete(async uow => {
+      let user = await uow.userRepository.getByName(location.user);
       if (!user) {
-        user = await unitOfWork.userRepository.insert({ name: location.user });
+        user = await uow.userRepository.insert({ name: location.user });
       }
 
-      let device = await unitOfWork.deviceRepository.getByName(
+      let device = await uow.deviceRepository.getByName(
         location.device,
         user.userId,
       );
       if (!device) {
-        device = await unitOfWork.deviceRepository.insert({
+        device = await uow.deviceRepository.insert({
           name: location.device,
           userId: user.userId,
         });
       }
 
-      await unitOfWork.locationRepository.insert({
+      await uow.locationRepository.insert({
         deviceId: device.deviceId,
         latitude: location.latitude,
         longitude: location.longitude,

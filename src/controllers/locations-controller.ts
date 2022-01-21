@@ -5,7 +5,7 @@ import {
   httpGet,
   interfaces,
   request,
-  response,
+  response
 } from 'inversify-express-utils';
 import { UnitOfWorkFactory } from '../data/unit-of-work';
 import TYPES from '../types';
@@ -15,7 +15,7 @@ export class LocationsController implements interfaces.Controller {
   constructor(
     @inject(TYPES.UnitOfWorkFactory)
     private unitOfWorkFactory: UnitOfWorkFactory,
-  ) {}
+  ) { }
 
   @httpGet('/')
   private async index(
@@ -23,6 +23,8 @@ export class LocationsController implements interfaces.Controller {
     @response() res: express.Response,
   ) {
     const unitOfWork = await this.unitOfWorkFactory.createUnitOfWork();
-    return await unitOfWork.locationRepository.getAll();
+    return await unitOfWork
+      .complete(
+        async uow => await uow.locationRepository.getAll());
   }
 }

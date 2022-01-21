@@ -5,7 +5,7 @@ import {
   httpGet,
   interfaces,
   request,
-  response,
+  response
 } from 'inversify-express-utils';
 import { UnitOfWorkFactory } from '../data/unit-of-work';
 import { ActivityFilter } from '../models/activity-filter';
@@ -16,7 +16,7 @@ export class ActivitiesController implements interfaces.Controller {
   constructor(
     @inject(TYPES.UnitOfWorkFactory)
     private unitOfWorkFactory: UnitOfWorkFactory,
-  ) {}
+  ) { }
 
   @httpGet('/')
   private async index(
@@ -25,6 +25,8 @@ export class ActivitiesController implements interfaces.Controller {
   ) {
     const filter = req.query as ActivityFilter;
     const unitOfWork = await this.unitOfWorkFactory.createUnitOfWork();
-    return await unitOfWork.activityRepository.getByFilter(filter);
+    return await unitOfWork
+      .complete(
+        async uow => uow.activityRepository.getByFilter(filter));
   }
 }
