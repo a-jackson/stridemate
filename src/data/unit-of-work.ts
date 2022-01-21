@@ -15,6 +15,7 @@ import { UserRepository, UserRepositoryImpl } from './user-repository';
 
 export interface UnitOfWorkFactory {
   createUnitOfWork(): Promise<UnitOfWork>;
+  execute<T>(work: (unitOfWork: UnitOfWork) => Promise<T>): Promise<T>;
 }
 
 @injectable()
@@ -25,11 +26,13 @@ export class UnitOfWorkFactoryImpl implements UnitOfWorkFactory {
   ) { }
 
   public async createUnitOfWork(): Promise<UnitOfWork> {
-    const client = await this.connectionManager.getClient();
+    return new UnitOfWorkImpl(
+      await this.connectionManager.getClient());
+  }
 
-    const unitOfWork = new UnitOfWorkImpl(client);
-
-    return unitOfWork;
+  public async execute<T>(work: (unitOfWork: UnitOfWork) => Promise<T>) {
+    const unitOfWork = await this.createUnitOfWork();
+    return await work(unitOfWork);
   }
 }
 

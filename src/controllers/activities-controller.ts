@@ -24,9 +24,8 @@ export class ActivitiesController implements interfaces.Controller {
     @response() res: express.Response,
   ) {
     const filter = req.query as ActivityFilter;
-    const unitOfWork = await this.unitOfWorkFactory.createUnitOfWork();
-    return await unitOfWork
-      .complete(
-        async uow => uow.activityRepository.getByFilter(filter));
+    return await this.unitOfWorkFactory
+      .execute(
+        async unitOfWork => unitOfWork.activityRepository.getByFilter(filter));
   }
 }

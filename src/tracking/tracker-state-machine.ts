@@ -50,32 +50,32 @@ export class TrackerStateMachineImpl implements TrackerStateMachine {
   }
 
   private async saveLocation(activity: Activity) {
-    const unitOfWork = await this.unitOfWorkFactory.createUnitOfWork();
-    await unitOfWork.complete(async () => {
-      let user = await unitOfWork.userRepository.getByName(this.user);
-      if (!user) {
-        user = await unitOfWork.userRepository.insert({ name: this.user });
-      }
+    await this.unitOfWorkFactory.execute(
+      async unitOfWork => {
+        let user = await unitOfWork.userRepository.getByName(this.user);
+        if (!user) {
+          user = await unitOfWork.userRepository.insert({ name: this.user });
+        }
 
-      let device = await unitOfWork.deviceRepository.getByName(
-        this.device,
-        user.userId,
-      );
-      if (!device) {
-        device = await unitOfWork.deviceRepository.insert({
-          name: this.device,
-          userId: user.userId,
+        let device = await unitOfWork.deviceRepository.getByName(
+          this.device,
+          user.userId,
+        );
+        if (!device) {
+          device = await unitOfWork.deviceRepository.insert({
+            name: this.device,
+            userId: user.userId,
+          });
+        }
+
+        await unitOfWork.activityRepository.insert({
+          deviceId: device.deviceId,
+          avgSpeedKm: activity.avgSpeedMpS * 3.6,
+          distanceKm: activity.distanceM / 1000,
+          startTime: activity.startTime,
+          endTime: activity.endTime,
+          name: activity.name,
         });
-      }
-
-      await unitOfWork.activityRepository.insert({
-        deviceId: device.deviceId,
-        avgSpeedKm: activity.avgSpeedMpS * 3.6,
-        distanceKm: activity.distanceM / 1000,
-        startTime: activity.startTime,
-        endTime: activity.endTime,
-        name: activity.name,
       });
-    });
   }
 }

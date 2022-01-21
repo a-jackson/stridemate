@@ -22,9 +22,8 @@ export class LocationsController implements interfaces.Controller {
     @request() req: express.Request,
     @response() res: express.Response,
   ) {
-    const unitOfWork = await this.unitOfWorkFactory.createUnitOfWork();
-    return await unitOfWork
-      .complete(
+    return await this.unitOfWorkFactory
+      .execute(
         async uow => await uow.locationRepository.getAll());
   }
 }
