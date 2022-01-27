@@ -18,9 +18,13 @@
     </div>
     <div class="ml-2">
       <button class="button is-primary is-inverted" title="View Map">
-        <span class="icon is-small">
-          <font-awesome-icon icon="map-marked-alt"></font-awesome-icon>
-        </span>
+        <router-link
+          :to="{ name: 'Details', params: { id: activity.activityId } }"
+        >
+          <span class="icon is-small">
+            <font-awesome-icon icon="map-marked-alt"></font-awesome-icon>
+          </span>
+        </router-link>
       </button>
     </div>
   </div>

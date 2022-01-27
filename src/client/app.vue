@@ -55,7 +55,7 @@ import { router } from './router';
   },
 })
 export default class App extends Vue {
-  public routes = router.getRoutes();
+  public routes = router.getRoutes().filter((x: any) => !x.meta.hidden);
   public isMenuActive = false;
 
   public toggleMenu() {

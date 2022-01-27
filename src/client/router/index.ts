@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Activities from '../views/activities.vue';
+import Details from '../views/details.vue';
 import Home from '../views/home.vue';
 
 const routes = [
@@ -18,6 +19,15 @@ const routes = [
     meta: {
       icon: 'running',
     },
+  },
+  {
+    path: '/Details/:id',
+    name: 'Details',
+    component: Details,
+    meta: {
+      hidden: true
+    },
+    props: true,
   },
 ];
 

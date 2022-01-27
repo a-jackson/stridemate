@@ -2,10 +2,12 @@ import { PoolClient } from 'pg';
 import { Location } from '../models/location';
 import { Repository } from './repository';
 
-export type LocationRepository = Repository<Location>;
+export interface LocationRepository extends Repository<Location> {
+  getActivityLocation(activityId: number): Promise<Location[]>;
+}
 
 export class LocationRepositoryImpl implements LocationRepository {
-  constructor(private client: PoolClient) {}
+  constructor(private client: PoolClient) { }
 
   public async getById(entityId: number): Promise<Location> {
     const result = await this.client.query<Location>(
@@ -24,6 +26,19 @@ export class LocationRepositoryImpl implements LocationRepository {
       FROM locations
       ORDER BY "time" ASC`,
     );
+
+    return result.rows;
+  }
+
+  public async getActivityLocation(activityId: number): Promise<Location[]> {
+    const result = await this.client.query<Location>(
+      `SELECT "locationId", "deviceId", "latitude", "longitude", "altitude", "accuracy", "velocity", "time" 
+        FROM locations
+        WHERE "time" > (SELECT "startTime" from activities where "activityId" = $1)
+        AND "time" < (SELECT "endTime" from activities where "activityId" = $1)
+        ORDER BY "time" ASC`,
+      [activityId],
+    )
 
     return result.rows;
   }
