@@ -20,32 +20,50 @@ export default class Details extends Vue {
       `/api/locations/${this.id}`,
     );
     this.locations = response.data;
+    var geojsonMarkerOptions = {
+      radius: 5,
+      fillColor: '#ff0000',
+      color: '#ffffff',
+      weight: 2,
+      opacity: 1,
+      fillOpacity: 0.9,
+    };
 
     this.map = L.map('map');
-    L.tileLayer(
-      'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}',
-      {
-        attribution:
-          'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-        maxZoom: 18,
-        id: 'mapbox/streets-v11',
-        tileSize: 512,
-        zoomOffset: -1,
-        accessToken:
-          'pk.eyJ1IjoiYWphY2tzb24zIiwiYSI6ImNreXhmaGhjcDBhbnIycHBndnlkcHd1bnMifQ.oyHzaE4R_xqE2mx-Jx1cvg',
-      },
-    ).addTo(this.map);
-    const group = L.featureGroup();
-    this.locations.forEach(location => {
-      L.circle([location.latitude, location.longitude], {
-        color: 'red',
-        fillColor: '#f03',
-        fillOpacity: 0.5,
-        radius: location.accuracy,
-      }).addTo(group);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution:
+        '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(this.map);
+
+    const features = this.locations.map(location => {
+      return {
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: [location.longitude, location.latitude],
+        },
+        properties: {
+          tst: location.time,
+          acc: location.accuracy,
+          vel: location.velocity,
+        },
+      };
     });
-    group.addTo(this.map);
-    this.map.fitBounds(group.getBounds());
+
+    const geoJsonLayer = new L.GeoJSON(
+      {
+        type: 'FeatureCollection',
+        features: features,
+      } as GeoJSON.FeatureCollection,
+      {
+        pointToLayer: function (feature, latlng) {
+          return L.circleMarker(latlng, geojsonMarkerOptions);
+        },
+      },
+    );
+
+    this.map.addLayer(geoJsonLayer);
+    this.map.fitBounds(geoJsonLayer.getBounds());
   }
 }
 </script>
