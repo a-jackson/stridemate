@@ -4,14 +4,35 @@ import { Repository } from './repository';
 
 export interface LocationRepository extends Repository<Location> {
   getActivityLocation(activityId: number): Promise<Location[]>;
+  getTimeRange(
+    startTime: Date,
+    endTime: Date,
+    deviceId: number,
+  ): Promise<Location[]>;
 }
 
 export class LocationRepositoryImpl implements LocationRepository {
-  constructor(private client: PoolClient) { }
+  constructor(private client: PoolClient) {}
+
+  public async getTimeRange(startTime: Date, endTime: Date, deviceId: number) {
+    const result = await this.client.query<Location>(
+      `SELECT "locationId", "deviceId", "latitude", "longitude", 
+        "altitude", "accuracy", "velocity", "time" 
+        FROM locations 
+        WHREE "time" BETWEEN $1 AND $2
+        AND "deviceId" = $2`,
+      [startTime, endTime, deviceId],
+    );
+
+    return result.rows;
+  }
 
   public async getById(entityId: number): Promise<Location> {
     const result = await this.client.query<Location>(
-      `SELECT "locationId", "deviceId", "latitude", "longitude", "altitude", "accuracy", "velocity", "time" FROM locations WHERE "locationId" = $1`,
+      `SELECT "locationId", "deviceId", "latitude", "longitude", 
+      "altitude", "accuracy", "velocity", "time" 
+      FROM locations 
+      WHERE "locationId" = $1`,
       [entityId],
     );
 
@@ -38,7 +59,7 @@ export class LocationRepositoryImpl implements LocationRepository {
         AND "time" < (SELECT "endTime" from activities where "activityId" = $1)
         ORDER BY "time" ASC`,
       [activityId],
-    )
+    );
 
     return result.rows;
   }

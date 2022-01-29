@@ -1,77 +1,73 @@
 <template>
-  <div id="map" class="map"></div>
+  <div class="container details" v-if="activity">
+    <div class="details__summary">
+      <span class="icon">
+        <font-awesome-icon :icon="icon"></font-awesome-icon>
+      </span>
+    </div>
+    <activity-map class="details__map" :id="id"></activity-map>
+  </div>
+  <div class="loading" v-else></div>
 </template>
 
 <script lang="ts">
-import { Vue } from 'vue-class-component';
-import L from 'leaflet';
+import { Options, Vue } from 'vue-class-component';
 import { Prop } from 'vue-property-decorator';
-import { Location } from '../../models/location';
+import { Activity } from '../../models/activity';
+import ActivityMap from '../components/activity-map.vue';
 import { httpClient } from '../services/http';
 
+@Options({
+  components: {
+    ActivityMap,
+  },
+})
 export default class Details extends Vue {
   @Prop() public id!: string;
-  public map?: L.Map;
+  public activity?: Activity;
 
-  private locations: Location[] = [];
+  private dateTimeFormat = new Intl.DateTimeFormat('en-GB', {
+    year: '2-digit',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
-  public async mounted() {
-    const response = await httpClient.get<Location[]>(
-      `/api/locations/${this.id}`,
+  public get icon() {
+    switch (this.activity?.name) {
+      case 'Walking':
+        return 'walking';
+      case 'Running':
+        return 'running';
+      case 'Driving':
+        return 'car';
+    }
+  }
+
+  public async created() {
+    const response = await httpClient.get<Activity>(
+      `/api/activities/${this.id}`,
     );
-    this.locations = response.data;
-    var geojsonMarkerOptions = {
-      radius: 5,
-      fillColor: '#ff0000',
-      color: '#ffffff',
-      weight: 2,
-      opacity: 1,
-      fillOpacity: 0.9,
-    };
-
-    this.map = L.map('map');
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution:
-        '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-    }).addTo(this.map);
-
-    const features = this.locations.map(location => {
-      return {
-        type: 'Feature',
-        geometry: {
-          type: 'Point',
-          coordinates: [location.longitude, location.latitude],
-        },
-        properties: {
-          tst: location.time,
-          acc: location.accuracy,
-          vel: location.velocity,
-        },
-      };
-    });
-
-    const geoJsonLayer = new L.GeoJSON(
-      {
-        type: 'FeatureCollection',
-        features: features,
-      } as GeoJSON.FeatureCollection,
-      {
-        pointToLayer: function (feature, latlng) {
-          return L.circleMarker(latlng, geojsonMarkerOptions);
-        },
-      },
-    );
-
-    this.map.addLayer(geoJsonLayer);
-    this.map.fitBounds(geoJsonLayer.getBounds());
+    this.activity = response.data;
+    this.$forceUpdate();
   }
 }
 </script>
 
 <style lang="scss">
-@import 'leaflet/dist/leaflet.css';
+.details {
+  height: 100%;
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
 
-.map {
-  height: 700px;
+  &__map {
+    grid-column: 1 / 3;
+  }
+
+  &__map {
+    grid-column: 1 / 3;
+  }
 }
 </style>

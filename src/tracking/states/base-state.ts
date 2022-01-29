@@ -1,4 +1,4 @@
-import { Activities, ActivityDefinition } from './activity-definition';
+import { ActivityDefinition, getActivity } from './activity-definition';
 
 export type Speed = {
   speed: number;
@@ -27,14 +27,7 @@ export abstract class BaseState {
   constructor(protected readonly activityCallback: ActivityCallback) {}
 
   protected getActivity(speed: Speed): ActivityDefinition {
-    let activity: ActivityDefinition;
-    for (activity of Activities) {
-      if (speed.speed <= activity.maxSpeed) {
-        return activity;
-      }
-    }
-
-    return activity;
+    return getActivity(speed.speed);
   }
 
   protected getDistance(speeds: Speed[], endTime?: Date) {

@@ -5,11 +5,29 @@ import { ActivityFilter } from '../models/activity-filter';
 import { Repository } from './repository';
 
 export interface ActivityRepository extends Repository<Activity> {
-  getByFilter(filter: ActivityFilter);
+  getByFilter(filter: ActivityFilter): Promise<Activity[]>;
+  getPrevious(activtyId: number): Promise<Activity>;
 }
 
 export class ActivityRepositoryImpl implements ActivityRepository {
   constructor(private client: PoolClient) {}
+
+  public async getPrevious(activtyId: number) {
+    const query = `SELECT "activityId", activities."name", "startTime", 
+      "endTime", "distanceKm", "avgSpeedKm", activities."deviceId", devices."name" AS "device"
+      FROM activities
+      INNER JOIN devices ON activities."deviceId" = devices."deviceId"
+      WHERE "endTime" < (SELECT "startTime" FROM activities WHERE "activityId" = $1)
+      AND "deviceId" = (SELECT "deviceId" FROM activities WHERE "activityId" = $1)
+      ORDER BY "endTime" DESC
+      LIMIT 1`;
+
+    const result = await this.client.query<Activity>(query, [activtyId]);
+
+    if (result.rowCount > 0) {
+      return result.rows[0];
+    }
+  }
 
   public async getByFilter(filter: ActivityFilter) {
     let query = `SELECT "activityId", activities."name", "startTime", 

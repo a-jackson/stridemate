@@ -40,8 +40,6 @@ export default class Activity extends Vue {
   @Prop() public activity!: IActivity;
 
   private dateTimeFormat = new Intl.DateTimeFormat('en-GB', {
-    // dateStyle: 'short',
-    // timeStyle: 'short',
     year: '2-digit',
     month: '2-digit',
     day: '2-digit',
