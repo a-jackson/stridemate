@@ -3,13 +3,13 @@ import { PoolClient } from 'pg';
 import TYPES from '../types';
 import {
   ActivityRepository,
-  ActivityRepositoryImpl
+  ActivityRepositoryImpl,
 } from './activity-repository';
 import { ConnectionManager } from './connection-manager';
 import { DeviceRepository, DeviceRepositoryImpl } from './device-repository';
 import {
   LocationRepository,
-  LocationRepositoryImpl
+  LocationRepositoryImpl,
 } from './location-repository';
 import { UserRepository, UserRepositoryImpl } from './user-repository';
 
@@ -23,16 +23,15 @@ export class UnitOfWorkFactoryImpl implements UnitOfWorkFactory {
   constructor(
     @inject(TYPES.ConnectionManager)
     private connectionManager: ConnectionManager,
-  ) { }
+  ) {}
 
   public async createUnitOfWork(): Promise<UnitOfWork> {
-    return new UnitOfWorkImpl(
-      await this.connectionManager.getClient());
+    return new UnitOfWorkImpl(await this.connectionManager.getClient());
   }
 
   public async execute<T>(work: (unitOfWork: UnitOfWork) => Promise<T>) {
     const unitOfWork = await this.createUnitOfWork();
-    return await work(unitOfWork);
+    return await unitOfWork.complete(x => work(x));
   }
 }
 
@@ -55,32 +54,32 @@ export class UnitOfWorkImpl implements UnitOfWork {
   private _locationRepository?: LocationRepository;
   private _activityRepository?: ActivityRepository;
 
-  constructor(private client: PoolClient) {
-  }
+  constructor(private client: PoolClient) {}
 
   public get userRepository() {
-    return this._userRepository
-      ??= new UserRepositoryImpl(this.client);
+    return (this._userRepository ??= new UserRepositoryImpl(this.client));
   }
 
   public get deviceRepository() {
-    return this._deviceRepository
-      ??= new DeviceRepositoryImpl(this.client);
+    return (this._deviceRepository ??= new DeviceRepositoryImpl(this.client));
   }
   public get locationRepository() {
-    return this._locationRepository
-      ??= new LocationRepositoryImpl(this.client);
+    return (this._locationRepository ??= new LocationRepositoryImpl(
+      this.client,
+    ));
   }
   public get activityRepository() {
-    return this._activityRepository
-      ??= new ActivityRepositoryImpl(this.client);
+    return (this._activityRepository ??= new ActivityRepositoryImpl(
+      this.client,
+    ));
   }
 
-  public async complete<T>(work: (unitOfWork: UnitOfWork) => Promise<T>): Promise<T> {
+  public async complete<T>(
+    work: (unitOfWork: UnitOfWork) => Promise<T>,
+  ): Promise<T> {
     try {
       await this.begin();
-      const result
-        = await work(this);
+      const result = await work(this);
       await this.commit();
       return result;
     } catch (e) {

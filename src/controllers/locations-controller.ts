@@ -2,7 +2,8 @@ import { inject } from 'inversify';
 import {
   controller,
   httpGet,
-  interfaces, requestParam
+  interfaces,
+  requestParam,
 } from 'inversify-express-utils';
 import { UnitOfWorkFactory } from '../data/unit-of-work';
 import TYPES from '../types';
@@ -12,14 +13,12 @@ export class LocationsController implements interfaces.Controller {
   constructor(
     @inject(TYPES.UnitOfWorkFactory)
     private unitOfWorkFactory: UnitOfWorkFactory,
-  ) { }
+  ) {}
 
   @httpGet('/:id')
-  private async index(
-    @requestParam('id') id: number,
-  ) {
-    return await this.unitOfWorkFactory
-      .execute(
-        async uow => await uow.locationRepository.getActivityLocation(id));
+  public async index(@requestParam('id') id: number) {
+    return await this.unitOfWorkFactory.execute(
+      async uow => await uow.locationRepository.getActivityLocation(id),
+    );
   }
 }
