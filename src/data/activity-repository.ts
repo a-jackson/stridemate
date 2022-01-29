@@ -7,6 +7,7 @@ import { Repository } from './repository';
 export interface ActivityRepository extends Repository<Activity> {
   getByFilter(filter: ActivityFilter): Promise<Activity[]>;
   getPrevious(activtyId: number): Promise<Activity>;
+  getNext(activtyId: number): Promise<Activity>;
 }
 
 export class ActivityRepositoryImpl implements ActivityRepository {
@@ -18,8 +19,25 @@ export class ActivityRepositoryImpl implements ActivityRepository {
       FROM activities
       INNER JOIN devices ON activities."deviceId" = devices."deviceId"
       WHERE "endTime" < (SELECT "startTime" FROM activities WHERE "activityId" = $1)
-      AND "deviceId" = (SELECT "deviceId" FROM activities WHERE "activityId" = $1)
+      AND activities."deviceId" = (SELECT "deviceId" FROM activities WHERE "activityId" = $1)
       ORDER BY "endTime" DESC
+      LIMIT 1`;
+
+    const result = await this.client.query<Activity>(query, [activtyId]);
+
+    if (result.rowCount > 0) {
+      return result.rows[0];
+    }
+  }
+
+  public async getNext(activtyId: number) {
+    const query = `SELECT "activityId", activities."name", "startTime", 
+      "endTime", "distanceKm", "avgSpeedKm", activities."deviceId", devices."name" AS "device"
+      FROM activities
+      INNER JOIN devices ON activities."deviceId" = devices."deviceId"
+      WHERE "startTime" > (SELECT "endTime" FROM activities WHERE "activityId" = $1)
+      AND activities."deviceId" = (SELECT "deviceId" FROM activities WHERE "activityId" = $1)
+      ORDER BY "startTime" ASC
       LIMIT 1`;
 
     const result = await this.client.query<Activity>(query, [activtyId]);
@@ -88,8 +106,10 @@ export class ActivityRepositoryImpl implements ActivityRepository {
     throw new Error('Method not implemented.');
   }
 
-  delete(entity: Activity): Promise<void> {
-    throw new Error('Method not implemented.');
+  public async delete(entity: Activity): Promise<void> {
+    await this.client.query(`DELETE FROM activities WHERE "activityId" = $1`, [
+      entity.activityId,
+    ]);
   }
 
   public async insert(entity: Partial<Activity>): Promise<Activity> {

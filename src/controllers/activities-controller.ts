@@ -41,6 +41,20 @@ export class ActivitiesController implements interfaces.Controller {
     );
   }
 
+  @httpGet('/:id/previous')
+  public async getPrevious(@requestParam('id') id: number) {
+    return await this.unitOfWorkFactory.execute(
+      async unitOfWork => await unitOfWork.activityRepository.getPrevious(id),
+    );
+  }
+
+  @httpGet('/:id/next')
+  public async getNext(@requestParam('id') id: number) {
+    return await this.unitOfWorkFactory.execute(
+      async unitOfWork => await unitOfWork.activityRepository.getNext(id),
+    );
+  }
+
   @httpPost('/:id/mergeWithPrevious')
   public async mergeWithPrevious(@requestParam('id') id: number) {
     await this.unitOfWorkFactory.execute(async unitOfWork => {
@@ -54,6 +68,7 @@ export class ActivitiesController implements interfaces.Controller {
         previous.startTime,
         current.endTime,
         current.deviceId,
+        30,
       );
 
       let speedSum = 0;

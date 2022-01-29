@@ -8,19 +8,26 @@ export interface LocationRepository extends Repository<Location> {
     startTime: Date,
     endTime: Date,
     deviceId: number,
+    maxAccuracy: number,
   ): Promise<Location[]>;
 }
 
 export class LocationRepositoryImpl implements LocationRepository {
   constructor(private client: PoolClient) {}
 
-  public async getTimeRange(startTime: Date, endTime: Date, deviceId: number) {
+  public async getTimeRange(
+    startTime: Date,
+    endTime: Date,
+    deviceId: number,
+    maxAccuracy: number,
+  ) {
     const result = await this.client.query<Location>(
       `SELECT "locationId", "deviceId", "latitude", "longitude", 
         "altitude", "accuracy", "velocity", "time" 
         FROM locations 
         WHREE "time" BETWEEN $1 AND $2
-        AND "deviceId" = $2`,
+        AND "deviceId" = $3
+        AND "accuracy" < $4`,
       [startTime, endTime, deviceId],
     );
 
