@@ -57,7 +57,7 @@ export class ActivitiesController implements interfaces.Controller {
 
   @httpPost('/:id/mergeWithPrevious')
   public async mergeWithPrevious(@requestParam('id') id: number) {
-    await this.unitOfWorkFactory.execute(async unitOfWork => {
+    return await this.unitOfWorkFactory.execute(async unitOfWork => {
       const current = await unitOfWork.activityRepository.getById(id);
       const previous = await unitOfWork.activityRepository.getPrevious(id);
       if (!current || !previous) {

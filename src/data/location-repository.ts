@@ -25,10 +25,10 @@ export class LocationRepositoryImpl implements LocationRepository {
       `SELECT "locationId", "deviceId", "latitude", "longitude", 
         "altitude", "accuracy", "velocity", "time" 
         FROM locations 
-        WHREE "time" BETWEEN $1 AND $2
+        WHERE "time" BETWEEN $1 AND $2
         AND "deviceId" = $3
         AND "accuracy" < $4`,
-      [startTime, endTime, deviceId],
+      [startTime, endTime, deviceId, maxAccuracy],
     );
 
     return result.rows;

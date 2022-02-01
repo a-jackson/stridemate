@@ -1,23 +1,111 @@
 <template>
-  <div class="container details" v-if="activity">
-    <div>{{ previous }}</div>
-    <div>{{ next }}</div>
-    <div class="details__summary">
-      <span class="icon">
-        <font-awesome-icon :icon="icon"></font-awesome-icon>
-      </span>
-      {{ startTime }} - {{ endTime }}
+  <div class="details tile is-ancestor" v-if="activity">
+    <div class="tile is-vertical">
+      <div class="tile">
+        <div class="tile is-parent is-3">
+          <div class="tile is-child notification is-warning">
+            <div v-if="previousActivity">
+              <button class="button is-info">
+                <router-link
+                  :to="{
+                    name: 'Details',
+                    params: { id: previousActivity.activityId },
+                  }"
+                >
+                  <span class="icon is-small">
+                    <font-awesome-icon icon="arrow-left"> </font-awesome-icon>
+                  </span>
+                </router-link>
+              </button>
+              <div class="icon-text">
+                <span class="icon">
+                  <font-awesome-icon icon="clock"></font-awesome-icon>
+                </span>
+                <span
+                  >{{ formatDateTime(previousActivity.startTime) }} -
+                  {{ formatTime(previousActivity.endTime) }}</span
+                >
+              </div>
+              <button
+                class="button is-danger"
+                title="Link with previous"
+                @click="mergeWithPrevious()"
+              >
+                <span class="icon is-small">
+                  <font-awesome-icon icon="link"></font-awesome-icon>
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="tile is-parent is-6">
+          <div class="tile is-child notification is-info">
+            <div class="title icon-text">
+              <span class="icon">
+                <font-awesome-icon :icon="icon"></font-awesome-icon>
+              </span>
+              <span>{{ activity.name }}</span>
+            </div>
+            <div></div>
+            <div class="icon-text">
+              <span class="icon">
+                <font-awesome-icon icon="clock"></font-awesome-icon>
+              </span>
+              <span
+                >{{ formatDateTime(activity.startTime) }} -
+                {{ formatTime(activity.endTime) }}</span
+              >
+            </div>
+            <div class="icon-text">
+              <span class="icon">
+                <font-awesome-icon icon="tachometer-alt"></font-awesome-icon>
+              </span>
+              <span>{{ activity.avgSpeedKm.toFixed(2) }} kph</span>
+            </div>
+            <div class="icon-text">
+              <span class="icon">
+                <font-awesome-icon icon="tachometer-alt"></font-awesome-icon>
+              </span>
+              <span>{{ activity.distanceKm.toFixed(2) }} kph</span>
+            </div>
+          </div>
+        </div>
+        <div class="tile is-parent is-3">
+          <div class="tile is-child notification is-warning">
+            <div v-if="nextActivity">
+              <span
+                >{{ formatDateTime(nextActivity.startTime) }} -
+                {{ formatTime(nextActivity.endTime) }}</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="title" style="height: 50vh">
+        <div class="tile is-parent" style="height: 100%">
+          <div
+            class="tile is-child notification is-primary"
+            style="height: 100%"
+          >
+            <activity-map
+              style="width: 100%; height: 100%"
+              :id="id"
+            ></activity-map>
+          </div>
+        </div>
+      </div>
     </div>
-    <activity-map class="details__map" :id="id"></activity-map>
   </div>
   <div class="loading" v-else></div>
 </template>
 
 <script lang="ts">
+import { watch } from '@vue/runtime-core';
 import { Options, Vue } from 'vue-class-component';
 import { Prop } from 'vue-property-decorator';
 import { Activity } from '../../models/activity';
 import ActivityMap from '../components/activity-map.vue';
+import { router } from '../router';
 import { httpClient } from '../services/http';
 
 @Options({
@@ -38,6 +126,10 @@ export default class Details extends Vue {
     hour: '2-digit',
     minute: '2-digit',
   });
+  private timeFormat = new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
   public get icon() {
     switch (this.activity?.name) {
@@ -51,6 +143,15 @@ export default class Details extends Vue {
   }
 
   public async created() {
+    await this.loadActivity();
+
+    watch(
+      () => this.id,
+      async () => await this.loadActivity(),
+    );
+  }
+
+  private async loadActivity() {
     const activityResponse = httpClient.get<Activity>(
       `/api/activities/${this.id}`,
     );
@@ -66,36 +167,26 @@ export default class Details extends Vue {
     this.$forceUpdate();
   }
 
-  public get startTime() {
-    if (this.activity) {
-      return this.formatTime(this.activity.startTime);
-    }
-  }
-
-  public get endTime() {
-    if (this.activity) {
-      return this.formatTime(this.activity.endTime);
-    }
-  }
-
-  public get previous() {
-    if (this.previousActivity) {
-      return `${this.formatTime(
-        this.previousActivity.startTime,
-      )}-${this.formatTime(this.previousActivity.endTime)}`;
-    }
-  }
-
-  public get next() {
-    if (this.nextActivity) {
-      return `${this.formatTime(this.nextActivity.startTime)}-${this.formatTime(
-        this.nextActivity.endTime,
-      )}`;
-    }
+  public formatDateTime(time: Date | number) {
+    return this.dateTimeFormat.format(new Date(time));
   }
 
   public formatTime(time: Date | number) {
-    return this.dateTimeFormat.format(new Date(time));
+    return this.timeFormat.format(new Date(time));
+  }
+
+  public async mergeWithPrevious() {
+    if (!this.activity || !this.previousActivity) {
+      return;
+    }
+
+    const response = await httpClient.post<Activity>(
+      `/api/activities/${this.activity.activityId}/mergeWithPrevious`,
+    );
+    await router.push({
+      name: 'Details',
+      params: { id: response.data.activityId },
+    });
   }
 }
 </script>
@@ -103,16 +194,5 @@ export default class Details extends Vue {
 <style lang="scss">
 .details {
   height: 100%;
-  display: grid;
-  grid-template-rows: 2rem 4rem 1fr;
-  grid-template-columns: 1fr 1fr;
-
-  &__summary {
-    grid-column: 1 / 3;
-  }
-
-  &__map {
-    grid-column: 1 / 3;
-  }
 }
 </style>

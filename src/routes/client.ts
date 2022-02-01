@@ -12,12 +12,21 @@ export async function useClient(app: express.Application) {
     config.plugins.push(new webpack.HotModuleReplacementPlugin());
 
     const compiler = webpack.webpack(config);
-    app.use(
-      webpackDevMiddleware.default(compiler, {
-        publicPath: '/',
-      }),
-    );
+    const devMiddleware = webpackDevMiddleware.default(compiler, {
+      publicPath: '/',
+    }) as any;
+    app.use(devMiddleware);
     app.use(webpackHotMiddleware.default(compiler));
+
+    app.get(
+      '*',
+      function (req, res) {
+        var index = devMiddleware.context.outputFileSystem.readFileSync(
+          path.join(config.output.path, 'index.html'),
+        );
+        res.end(index);
+      }.bind(this),
+    );
   } else {
     app.use(express.static(path.join(__dirname, '../public')));
 

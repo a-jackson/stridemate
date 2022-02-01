@@ -58,6 +58,12 @@ export default class ActivityMap extends Vue {
         pointToLayer: function (feature, latlng) {
           return L.circleMarker(latlng, geojsonMarkerOptions);
         },
+
+        onEachFeature: function (feature, layer) {
+          var t = `${new Date(feature.properties.tst).toTimeString()}`;
+
+          layer.bindPopup(t);
+        },
       },
     );
 

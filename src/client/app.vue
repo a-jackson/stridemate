@@ -44,14 +44,6 @@
   <router-view class="section"></router-view>
 </template>
 
-<style lang="scss">
-html,
-body,
-#app {
-  height: 100%;
-}
-</style>
-
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component';
 import UserSelector from './components/user-selector.vue';

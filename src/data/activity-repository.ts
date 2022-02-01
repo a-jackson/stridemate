@@ -18,7 +18,7 @@ export class ActivityRepositoryImpl implements ActivityRepository {
       "endTime", "distanceKm", "avgSpeedKm", activities."deviceId", devices."name" AS "device"
       FROM activities
       INNER JOIN devices ON activities."deviceId" = devices."deviceId"
-      WHERE "endTime" < (SELECT "startTime" FROM activities WHERE "activityId" = $1)
+      WHERE "endTime" <= (SELECT "startTime" FROM activities WHERE "activityId" = $1)
       AND activities."deviceId" = (SELECT "deviceId" FROM activities WHERE "activityId" = $1)
       ORDER BY "endTime" DESC
       LIMIT 1`;
@@ -35,7 +35,7 @@ export class ActivityRepositoryImpl implements ActivityRepository {
       "endTime", "distanceKm", "avgSpeedKm", activities."deviceId", devices."name" AS "device"
       FROM activities
       INNER JOIN devices ON activities."deviceId" = devices."deviceId"
-      WHERE "startTime" > (SELECT "endTime" FROM activities WHERE "activityId" = $1)
+      WHERE "startTime" >= (SELECT "endTime" FROM activities WHERE "activityId" = $1)
       AND activities."deviceId" = (SELECT "deviceId" FROM activities WHERE "activityId" = $1)
       ORDER BY "startTime" ASC
       LIMIT 1`;
