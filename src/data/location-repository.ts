@@ -4,6 +4,10 @@ import { Repository } from './repository';
 
 export interface LocationRepository extends Repository<Location> {
   getActivityLocation(activityId: number): Promise<Location[]>;
+  getActivityLocation(
+    activityId: number,
+    maxAccuracy: number,
+  ): Promise<Location[]>;
   getTimeRange(
     startTime: Date,
     endTime: Date,
@@ -58,14 +62,18 @@ export class LocationRepositoryImpl implements LocationRepository {
     return result.rows;
   }
 
-  public async getActivityLocation(activityId: number): Promise<Location[]> {
+  public async getActivityLocation(
+    activityId: number,
+    maxAccuracy: number = 30,
+  ): Promise<Location[]> {
     const result = await this.client.query<Location>(
       `SELECT "locationId", "deviceId", "latitude", "longitude", "altitude", "accuracy", "velocity", "time" 
         FROM locations
         WHERE "time" > (SELECT "startTime" from activities where "activityId" = $1)
         AND "time" < (SELECT "endTime" from activities where "activityId" = $1)
+        AND "accuracy" < $2
         ORDER BY "time" ASC`,
-      [activityId],
+      [activityId, maxAccuracy],
     );
 
     return result.rows;
