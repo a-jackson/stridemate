@@ -7,6 +7,8 @@ import {
 } from './data/connection-manager';
 import { UnitOfWorkFactory, UnitOfWorkFactoryImpl } from './data/unit-of-work';
 import { Mqtt, MqttClient } from './mqtt/mqtt';
+import { DataTracker } from './tracking/data-tracker';
+import { MqttTracker, MqttTrackerImpl } from './tracking/mqtt-tracker';
 import { SaveLocations, SaveLocationsImpl } from './tracking/save-locations';
 import { Tracker, TrackerImpl } from './tracking/tracker';
 import {
@@ -36,5 +38,13 @@ container
   .to(TrackerStateMachineImpl)
   .inRequestScope();
 container.bind<Tracker>(TYPES.Tracker).to(TrackerImpl).inSingletonScope();
+container
+  .bind<MqttTracker>(TYPES.MqttTracker)
+  .to(MqttTrackerImpl)
+  .inSingletonScope();
+container
+  .bind<DataTracker>(TYPES.DataTracker)
+  .to(DataTracker)
+  .inSingletonScope();
 
 export { container };

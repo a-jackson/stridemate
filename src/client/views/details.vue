@@ -66,7 +66,7 @@
               <span class="icon">
                 <font-awesome-icon icon="tachometer-alt"></font-awesome-icon>
               </span>
-              <span>{{ activity.distanceKm.toFixed(2) }} kph</span>
+              <span>{{ activity.distanceKm.toFixed(2) }} km</span>
             </div>
           </div>
         </div>

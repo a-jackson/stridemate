@@ -14,7 +14,7 @@ export class InActivityState extends BaseState implements State {
     super(activityCallback);
   }
 
-  public newSpeed(speed: Speed): State {
+  public async newSpeed(speed: Speed): Promise<State> {
     this.speeds.push(speed);
 
     if (!this.timeActivityEnd) {
@@ -44,13 +44,24 @@ export class InActivityState extends BaseState implements State {
 
     // If this works out to the same as we were doing befor then reset and stay in activity
     if (activitySinceEnd.name === this.activity.name) {
+      // Ensure that there's not a smaller window with a different activity
+      for (let i = 1; i < speedsSinceEnd.length; i++) {
+        const activitySincePartialEnd = this.getActivityOverTime(
+          speedsSinceEnd.slice(i),
+        );
+        if (activitySincePartialEnd.name !== this.activity.name) {
+          this.timeActivityEnd = speedsSinceEnd[i].time;
+          return this;
+        }
+      }
+
       this.timeActivityEnd = undefined;
       return this;
     }
 
     const stats = this.getStats(this.speeds, this.timeActivityEnd);
 
-    this.activityCallback({
+    await this.activityCallback({
       name: this.activity.name,
       startTime: this.startTime,
       endTime: this.timeActivityEnd,

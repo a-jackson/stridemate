@@ -1,77 +1,91 @@
-import { CronJob } from 'cron';
 import haversine from 'haversine';
-import { inject, injectable } from 'inversify';
+import { injectable } from 'inversify';
 import { container } from '../inversify.config';
-import { Location, Mqtt } from '../mqtt/mqtt';
+import { Location } from '../mqtt/mqtt';
 import TYPES from '../types';
 import { TrackerStateMachine } from './tracker-state-machine';
 
 const MaxAccuracy = 30;
 
 export interface Tracker {
-  start(): void;
+  onLocation(location: Location): Promise<void>;
 }
 
 @injectable()
 export class TrackerImpl implements Tracker {
-  private job: CronJob;
-  private readonly locations: { [device: string]: Location[] } = {};
+  private readonly lastLocation: { [device: string]: Location } = {};
   private readonly stateMachines: { [device: string]: TrackerStateMachine } =
     {};
 
-  constructor(@inject(TYPES.Mqtt) private mqtt: Mqtt) {
-    this.job = new CronJob('0 */1 * * * *', () => this.onTick());
+  public async onLocation(location: Location) {
+    // Ignore low accuracy locations
+    if (location.accuracy >= MaxAccuracy) {
+      return;
+    }
+
+    const device = `${location.user}/${location.device}`;
+    this.initialiseStateMachine(device, location);
+
+    if (!this.lastLocation[device]) {
+      this.lastLocation[device] = location;
+      return;
+    }
+
+    const lastLocation = this.lastLocation[device];
+
+    const timeDiff = location.time.getTime() - lastLocation.time.getTime();
+
+    if (timeDiff <= 0) {
+      // location is older than lastLocation so we're just going to ignore it
+      return;
+    }
+
+    // lastLocation is older than a minute ago so we're going to assume we've been stationary since then
+    // and just push through a 0 speed for every minute since.
+    if (timeDiff > 60000) {
+      await this.handleZeroMovement(lastLocation, location, device);
+      return;
+    }
+
+    const speed = this.getSpeed(lastLocation, location);
+    await this.stateMachines[device].newSpeed({
+      speed: speed,
+      time: location.time,
+    });
   }
 
-  public start() {
-    this.mqtt.onLocation(x => this.onLocation(x));
-    this.job.start();
-  }
-
-  private onLocation(location: Location) {
-    if (location.accuracy < MaxAccuracy) {
-      const device = `${location.user}/${location.device}`;
-      if (!this.locations[device]) {
-        this.locations[device] = [];
-        this.stateMachines[device] = container.get<TrackerStateMachine>(
-          TYPES.TrackerStateMachine,
-        );
-        this.stateMachines[device].setDevice(location.user, location.device);
-      }
-      this.locations[device].push(location);
+  private initialiseStateMachine(device: string, location: Location) {
+    if (!this.stateMachines[device]) {
+      this.stateMachines[device] = container.get<TrackerStateMachine>(
+        TYPES.TrackerStateMachine,
+      );
+      this.stateMachines[device].setDevice(location.user, location.device);
     }
   }
 
-  private onTick() {
-    for (const device in this.locations) {
-      const locations = this.locations[device];
-      const averageSpeed =
-        locations.length < 2 ? 0 : this.getAverageSpeed(locations);
-      this.stateMachines[device].newSpeed({
-        speed: averageSpeed,
-        time: new Date(),
+  private async handleZeroMovement(
+    lastLocation: Location,
+    location: Location,
+    device: string,
+  ) {
+    for (
+      let time = lastLocation.time.getTime();
+      time < location.time.getTime();
+      time += 60000
+    ) {
+      await this.stateMachines[device].newSpeed({
+        speed: 0,
+        time: new Date(time),
       });
-
-      locations.length = 0;
     }
+    this.lastLocation[device] = location;
   }
 
-  private getAverageSpeed(locations: Location[]) {
-    if (locations.length < 2) {
-      return 0;
-    }
-
-    let speedSum = 0;
-
-    for (let i = 1; i < locations.length; i++) {
-      const distance = haversine(locations[i - 1], locations[i], {
-        unit: 'meter',
-      });
-      const timeDiff =
-        locations[i].time.getTime() - locations[i - 1].time.getTime();
-      speedSum += distance / (timeDiff / 1000);
-    }
-
-    return speedSum / (locations.length - 1);
+  private getSpeed(lastLocation: Location, location: Location) {
+    const distance = haversine(lastLocation, location, {
+      unit: 'meter',
+    });
+    const timeDiff = location.time.getTime() - lastLocation.time.getTime();
+    return distance / (timeDiff / 1000);
   }
 }

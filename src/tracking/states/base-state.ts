@@ -6,7 +6,7 @@ export type Speed = {
 };
 
 export interface State {
-  newSpeed(speed: Speed): State;
+  newSpeed(speed: Speed): Promise<State>;
 }
 
 export type Activity = {
@@ -18,7 +18,7 @@ export type Activity = {
   avgSpeedMpS: number;
 };
 
-export type ActivityCallback = (activity: Activity) => void;
+export type ActivityCallback = (activity: Activity) => Promise<void>;
 
 export abstract class BaseState {
   protected TransitionTimeMinutes = 5;

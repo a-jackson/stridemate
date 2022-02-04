@@ -17,27 +17,29 @@ export class TransitioningState extends BaseState implements State {
     this.startTime = speeds[0].time;
   }
 
-  public newSpeed(speed: Speed): State {
+  public newSpeed(speed: Speed): Promise<State> {
     this.speeds.push(speed);
 
     // Wait 5 minutes before we do anything.
     const timeSinceStartMs = speed.time.getTime() - this.startTime.getTime();
     if (timeSinceStartMs < this.TransitionTimeMs) {
-      return this;
+      return Promise.resolve(this);
     }
 
     // Get the average speed over the transition period
     const activitySinceStart = this.getActivityOverTime(this.speeds);
 
     if (activitySinceStart.isIdle) {
-      return new IdleState(this.activityCallback);
+      return Promise.resolve(new IdleState(this.activityCallback));
     }
 
-    return new InActivityState(
-      this.activityCallback,
-      this.speeds,
-      activitySinceStart,
-      this.startTime,
+    return Promise.resolve(
+      new InActivityState(
+        this.activityCallback,
+        this.speeds,
+        activitySinceStart,
+        this.startTime,
+      ),
     );
   }
 }

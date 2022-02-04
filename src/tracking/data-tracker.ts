@@ -1,71 +1,47 @@
-import haversine from 'haversine';
 import { inject, injectable } from 'inversify';
 import { UnitOfWorkFactory } from '../data/unit-of-work';
-import { Location } from '../models/location';
 import TYPES from '../types';
-import { TrackerStateMachine } from './tracker-state-machine';
+import { Tracker } from './tracker';
 
+// This the purpose of this is for debugging the activity tracker using
+// previously saved data.
 @injectable()
 export class DataTracker {
   constructor(
     @inject(TYPES.UnitOfWorkFactory)
     private unitOfWorkFactory: UnitOfWorkFactory,
-    @inject(TYPES.TrackerStateMachine)
-    private stateMachine: TrackerStateMachine,
-  ) {
-    this.stateMachine.setDevice("andrew", "pixel2xl");
-  }
+    @inject(TYPES.Tracker)
+    private tracker: Tracker,
+  ) {}
 
   public async run() {
     const unitOfWork = await this.unitOfWorkFactory.createUnitOfWork();
 
-    let locations = await unitOfWork.locationRepository.getAll();
-    locations = locations.filter(x => x.accuracy < 30 && x.time.getDate() >= 3);
+    let locations = await unitOfWork.locationRepository.getTimeRange(
+      new Date('2022-01-29T13:30:00Z'),
+      new Date('2022-01-29T16:00:00Z'),
+      1,
+      30,
+    );
     if (locations.length === 0) {
       return;
     }
 
-    let startTime = locations[0].time;
-    const minuteLocations = [];
+    const user = `${new Date().getHours()}:${new Date().getMinutes()}`;
+
     for (const location of locations) {
-      if (minuteLocations.length === 0) {
-        startTime = location.time;
-      }
-
-      minuteLocations.push(location);
-      if (location.time.getTime() < startTime.getTime() + 60000) {
-        continue;
-      }
-
-      this.stateMachine.newSpeed({
-        speed: this.getAverageSpeed(minuteLocations),
+      await this.tracker.onLocation({
+        accuracy: location.accuracy,
+        altitude: location.altitude,
+        latitude: location.latitude,
+        longitude: location.longitude,
         time: location.time,
+        velocity: location.velocity,
+        device: 'test',
+        user: user,
       });
-
-      minuteLocations.length = 0;
     }
 
     console.log('complete');
-  }
-
-  private getAverageSpeed(locations: Location[]) {
-    if (locations.length < 2) {
-      return 0;
-    }
-
-    let speedSum = 0;
-
-    for (let i = 1; i < locations.length; i++) {
-      const distance = haversine(locations[i - 1], locations[i], {
-        unit: 'meter',
-      });
-      const timeDiff =
-        locations[i].time.getTime() - locations[i - 1].time.getTime();
-      if (timeDiff > 0) {
-        speedSum += distance / (timeDiff / 1000);
-      }
-    }
-
-    return speedSum / (locations.length - 1);
   }
 }

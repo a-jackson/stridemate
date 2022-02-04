@@ -7,11 +7,13 @@ export class IdleState extends BaseState implements State {
     super(activityCallback);
   }
 
-  public newSpeed(speed: Speed): State {
+  public newSpeed(speed: Speed): Promise<State> {
     if (speed.speed > Activities[0].maxSpeed) {
-      return new TransitioningState(this.activityCallback, [speed]);
+      return Promise.resolve(
+        new TransitioningState(this.activityCallback, [speed]),
+      );
     }
 
-    return this;
+    return Promise.resolve(this);
   }
 }
