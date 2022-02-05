@@ -2,6 +2,10 @@ import { inject, injectable } from 'inversify';
 import { PoolClient } from 'pg';
 import TYPES from '../types';
 import {
+  ActivityLocationRepository,
+  ActivityLocationRepositoryImpl,
+} from './activity-location-repository';
+import {
   ActivityRepository,
   ActivityRepositoryImpl,
 } from './activity-repository';
@@ -40,6 +44,7 @@ export interface UnitOfWork {
   readonly deviceRepository: DeviceRepository;
   readonly locationRepository: LocationRepository;
   readonly activityRepository: ActivityRepository;
+  readonly activityLocationRepository: ActivityLocationRepository;
 
   complete<T>(work: (unitOfWork: UnitOfWork) => Promise<T>): Promise<T>;
   begin(): Promise<void>;
@@ -53,6 +58,7 @@ export class UnitOfWorkImpl implements UnitOfWork {
   private _deviceRepository?: DeviceRepository;
   private _locationRepository?: LocationRepository;
   private _activityRepository?: ActivityRepository;
+  private _activityLocationRepository?: ActivityLocationRepository;
 
   constructor(private client: PoolClient) {}
 
@@ -72,6 +78,10 @@ export class UnitOfWorkImpl implements UnitOfWork {
     return (this._activityRepository ??= new ActivityRepositoryImpl(
       this.client,
     ));
+  }
+  public get activityLocationRepository() {
+    return (this._activityLocationRepository ??=
+      new ActivityLocationRepositoryImpl(this.client));
   }
 
   public async complete<T>(
