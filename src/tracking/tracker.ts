@@ -1,4 +1,3 @@
-import haversine from 'haversine';
 import { injectable } from 'inversify';
 import { container } from '../inversify.config';
 import { Location } from '../mqtt/mqtt';
@@ -13,7 +12,6 @@ export interface Tracker {
 
 @injectable()
 export class TrackerImpl implements Tracker {
-  private readonly lastLocation: { [device: string]: Location } = {};
   private readonly stateMachines: { [device: string]: TrackerStateMachine } =
     {};
 
@@ -26,32 +24,7 @@ export class TrackerImpl implements Tracker {
     const device = `${location.user}/${location.device}`;
     this.initialiseStateMachine(device, location);
 
-    if (!this.lastLocation[device]) {
-      this.lastLocation[device] = location;
-      return;
-    }
-
-    const lastLocation = this.lastLocation[device];
-
-    const timeDiff = location.time.getTime() - lastLocation.time.getTime();
-
-    if (timeDiff <= 0) {
-      // location is older than lastLocation so we're just going to ignore it
-      return;
-    }
-
-    // lastLocation is older than a minute ago so we're going to assume we've been stationary since then
-    // and just push through a 0 speed for every minute since.
-    if (timeDiff > 60000) {
-      await this.handleZeroMovement(lastLocation, location, device);
-      return;
-    }
-
-    const speed = this.getSpeed(lastLocation, location);
-    await this.stateMachines[device].newSpeed({
-      speed: speed,
-      time: location.time,
-    });
+    await this.stateMachines[device].newLocation(location);
   }
 
   private initialiseStateMachine(device: string, location: Location) {
@@ -61,31 +34,5 @@ export class TrackerImpl implements Tracker {
       );
       this.stateMachines[device].setDevice(location.user, location.device);
     }
-  }
-
-  private async handleZeroMovement(
-    lastLocation: Location,
-    location: Location,
-    device: string,
-  ) {
-    for (
-      let time = lastLocation.time.getTime();
-      time < location.time.getTime();
-      time += 60000
-    ) {
-      await this.stateMachines[device].newSpeed({
-        speed: 0,
-        time: new Date(time),
-      });
-    }
-    this.lastLocation[device] = location;
-  }
-
-  private getSpeed(lastLocation: Location, location: Location) {
-    const distance = haversine(lastLocation, location, {
-      unit: 'meter',
-    });
-    const timeDiff = location.time.getTime() - lastLocation.time.getTime();
-    return distance / (timeDiff / 1000);
   }
 }

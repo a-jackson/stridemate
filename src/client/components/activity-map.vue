@@ -8,6 +8,7 @@ import { Prop } from 'vue-property-decorator';
 import { httpClient } from '../services/http';
 import { Location } from '../../models/location';
 import { watch } from '@vue/runtime-core';
+import { ActivityLocation } from '../../models/activity-location';
 
 export default class ActivityMap extends Vue {
   @Prop() public id!: string;
@@ -22,7 +23,7 @@ export default class ActivityMap extends Vue {
   }
 
   public async loadData() {
-    const response = await httpClient.get<Location[]>(
+    const response = await httpClient.get<ActivityLocation[]>(
       `/api/locations/${this.id}`,
     );
 

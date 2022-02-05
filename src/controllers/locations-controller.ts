@@ -18,7 +18,7 @@ export class LocationsController implements interfaces.Controller {
   @httpGet('/:id')
   public async index(@requestParam('id') id: number) {
     return await this.unitOfWorkFactory.execute(
-      async uow => await uow.locationRepository.getActivityLocation(id),
+      async uow => await uow.activityLocationRepository.getByActivity(id),
     );
   }
 }

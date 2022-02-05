@@ -18,8 +18,8 @@ export class DataTracker {
     const unitOfWork = await this.unitOfWorkFactory.createUnitOfWork();
 
     let locations = await unitOfWork.locationRepository.getTimeRange(
-      new Date('2022-01-29T13:30:00Z'),
-      new Date('2022-01-29T16:00:00Z'),
+      new Date('2022-02-03T17:45:00Z'),
+      new Date('2022-02-03T20:00:00Z'),
       1,
       30,
     );

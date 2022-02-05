@@ -1,14 +1,26 @@
+import haversine from 'haversine';
 import { inject, injectable } from 'inversify';
 import { UnitOfWork, UnitOfWorkFactory } from '../data/unit-of-work';
 import { Activity as DbActivity } from '../models/activity';
+import { ActivityLocation } from '../models/activity-location';
+import { Location } from '../mqtt/mqtt';
 import TYPES from '../types';
+import { KalmanFilter } from './kalman-filter';
 import { Activity, Speed, State } from './states/base-state';
 import { IdleState } from './states/idle-state';
 
 export interface TrackerStateMachine {
-  newSpeed(speed: Speed): Promise<void>;
+  newLocation(location: Location): Promise<void>;
   setDevice(user: string, device: string): void;
 }
+
+type KalmanLocation = {
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+  altitude: number;
+  time: number;
+};
 
 @injectable()
 export class TrackerStateMachineImpl implements TrackerStateMachine {
@@ -16,6 +28,8 @@ export class TrackerStateMachineImpl implements TrackerStateMachine {
   private user: string;
   private device: string;
   private currentActivityId?: number;
+  private lastLocation?: KalmanLocation;
+  private kalmanFilter: KalmanFilter;
 
   constructor(
     @inject(TYPES.UnitOfWorkFactory)
@@ -25,6 +39,8 @@ export class TrackerStateMachineImpl implements TrackerStateMachine {
       async (activity, inProgress) =>
         await this.activityTracked(activity, inProgress),
     );
+
+    this.kalmanFilter = new KalmanFilter(3);
   }
 
   public setDevice(user: string, device: string) {
@@ -32,12 +48,62 @@ export class TrackerStateMachineImpl implements TrackerStateMachine {
     this.device = device;
   }
 
-  public async newSpeed(speed: Speed) {
-    if (isNaN(speed.speed)) {
-      throw new Error(`Speed is NaN ${speed.time}`);
+  public async newLocation(location: Location) {
+    if (location.time.getTime() == this.kalmanFilter.timestamp) {
+      return;
     }
 
-    this.state = await this.state.newSpeed(speed);
+    this.kalmanFilter.process(
+      Number(location.latitude),
+      Number(location.longitude),
+      location.accuracy,
+      location.time.getTime(),
+    );
+
+    const currentLocation = {
+      latitude: this.kalmanFilter.latitude,
+      longitude: this.kalmanFilter.longtiude,
+      time: this.kalmanFilter.timestamp,
+      accuracy: this.kalmanFilter.accuracy,
+      altitude: location.altitude,
+    } as KalmanLocation;
+
+    if (this.lastLocation) {
+      const timeDiff = currentLocation.time - this.lastLocation.time;
+      if (timeDiff <= 0) {
+        // location is older than lastLocation so we're just going to ignore it
+        return;
+      }
+
+      // lastLocation is older than a minute ago so we're going to assume we've been stationary since then
+      // and just push through a 0 speed for every minute since.
+      if (timeDiff > 60000) {
+        await this.handleZeroMovement(this.lastLocation, currentLocation);
+        return;
+      }
+
+      const speed = {
+        speed: this.getSpeed(this.lastLocation, currentLocation),
+        time: location.time,
+      } as Speed;
+
+      if (isNaN(speed.speed)) {
+        throw new Error(`Speed is NaN ${speed.time}`);
+      }
+
+      this.state = await this.state.newSpeed(speed);
+
+      if (this.currentActivityId) {
+        await this.unitOfWorkFactory.execute(
+          async unitOfWork =>
+            await unitOfWork.activityLocationRepository.insert(
+              this.getActivityLocation(currentLocation),
+            ),
+        );
+      }
+    }
+
+    this.lastLocation = currentLocation;
   }
 
   private async activityTracked(activity: Activity, inProgress: boolean) {
@@ -72,6 +138,9 @@ export class TrackerStateMachineImpl implements TrackerStateMachine {
       if (!this.currentActivityId) {
         const result = await unitOfWork.activityRepository.insert(newActivity);
         this.currentActivityId = result.activityId;
+        await unitOfWork.activityLocationRepository.insert(
+          this.getActivityLocation(this.lastLocation),
+        );
       } else {
         newActivity.activityId = this.currentActivityId;
         await unitOfWork.activityRepository.update(newActivity);
@@ -101,5 +170,40 @@ export class TrackerStateMachineImpl implements TrackerStateMachine {
       });
     }
     return device;
+  }
+
+  private getSpeed(lastLocation: KalmanLocation, location: KalmanLocation) {
+    const distance = haversine(lastLocation, location, {
+      unit: 'meter',
+    });
+    const timeDiff = location.time - lastLocation.time;
+    return distance / (timeDiff / 1000);
+  }
+
+  private getActivityLocation(location: KalmanLocation) {
+    if (!this.currentActivityId) return;
+
+    return {
+      activityId: this.currentActivityId,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      time: new Date(location.time),
+      accuracy: location.accuracy,
+      altitude: location.altitude,
+    } as Partial<ActivityLocation>;
+  }
+
+  private async handleZeroMovement(
+    lastLocation: KalmanLocation,
+    location: KalmanLocation,
+  ) {
+    for (let time = lastLocation.time; time < location.time; time += 60000) {
+      this.state = await this.state.newSpeed({
+        speed: 0,
+        time: new Date(time),
+      });
+    }
+
+    this.lastLocation = location;
   }
 }
