@@ -4,6 +4,7 @@ import { TransitioningState } from './transitioning-state';
 
 export class InActivityState extends BaseState implements State {
   private timeActivityEnd?: Date;
+  private lastUpdated?: Date;
 
   constructor(
     activityCallback: ActivityCallback,
@@ -18,9 +19,10 @@ export class InActivityState extends BaseState implements State {
     this.speeds.push(speed);
 
     if (!this.timeActivityEnd) {
-      const activity = this.getActivity(speed);
+      await this.updateActivityIfRequired(speed);
 
       // We're still doing the thing we were doing
+      const activity = this.getActivity(speed);
       if (activity.name === this.activity.name) {
         return this;
       }
@@ -51,6 +53,7 @@ export class InActivityState extends BaseState implements State {
         );
         if (activitySincePartialEnd.name !== this.activity.name) {
           this.timeActivityEnd = speedsSinceEnd[i].time;
+          await this.updateActivity(this.timeActivityEnd, true);
           return this;
         }
       }
@@ -59,17 +62,36 @@ export class InActivityState extends BaseState implements State {
       return this;
     }
 
-    const stats = this.getStats(this.speeds, this.timeActivityEnd);
-
-    await this.activityCallback({
-      name: this.activity.name,
-      startTime: this.startTime,
-      endTime: this.timeActivityEnd,
-      durationSeconds: stats.duration,
-      distanceM: stats.distance,
-      avgSpeedMpS: stats.avgSpeed,
-    });
+    // Activity ends
+    await this.updateActivity(this.timeActivityEnd, false);
 
     return new TransitioningState(this.activityCallback, speedsSinceEnd);
+  }
+
+  private async updateActivityIfRequired(speed: Speed) {
+    if (
+      !this.lastUpdated ||
+      speed.time.getTime() - this.lastUpdated.getTime() > 30000
+    ) {
+      await this.updateActivity(speed.time, true);
+
+      this.lastUpdated = speed.time;
+    }
+  }
+
+  private async updateActivity(endTime: Date, inProgress: boolean) {
+    const stats = this.getStats(this.speeds, endTime);
+
+    await this.activityCallback(
+      {
+        name: this.activity.name,
+        startTime: this.startTime,
+        endTime: endTime,
+        durationSeconds: stats.duration,
+        distanceM: stats.distance,
+        avgSpeedMpS: stats.avgSpeed,
+      },
+      inProgress,
+    );
   }
 }

@@ -102,8 +102,24 @@ export class ActivityRepositoryImpl implements ActivityRepository {
     return result.rows;
   }
 
-  update(entity: Activity): Promise<void> {
-    throw new Error('Method not implemented.');
+  public async update(entity: Activity): Promise<void> {
+    await this.client.query(
+      `UPDATE activities SET
+      "name" = $1,
+      "startTime" = $2,
+      "endTime" = $3,
+      "distanceKm" = $4,
+      "avgSpeedKm" = $5
+      WHERE "activityId" = $6`,
+      [
+        entity.name,
+        entity.startTime,
+        entity.endTime,
+        entity.distanceKm,
+        entity.avgSpeedKm,
+        entity.activityId,
+      ],
+    );
   }
 
   public async delete(entity: Activity): Promise<void> {

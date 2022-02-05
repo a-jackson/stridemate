@@ -18,7 +18,10 @@ export type Activity = {
   avgSpeedMpS: number;
 };
 
-export type ActivityCallback = (activity: Activity) => Promise<void>;
+export type ActivityCallback = (
+  activity: Activity,
+  inProgress: boolean,
+) => Promise<void>;
 
 export abstract class BaseState {
   protected TransitionTimeMinutes = 5;
