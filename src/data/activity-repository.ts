@@ -20,6 +20,7 @@ export class ActivityRepositoryImpl implements ActivityRepository {
       INNER JOIN devices ON activities."deviceId" = devices."deviceId"
       WHERE "endTime" <= (SELECT "startTime" FROM activities WHERE "activityId" = $1)
       AND activities."deviceId" = (SELECT "deviceId" FROM activities WHERE "activityId" = $1)
+      AND "deleted" = false
       ORDER BY "endTime" DESC
       LIMIT 1`;
 
@@ -37,6 +38,7 @@ export class ActivityRepositoryImpl implements ActivityRepository {
       INNER JOIN devices ON activities."deviceId" = devices."deviceId"
       WHERE "startTime" >= (SELECT "endTime" FROM activities WHERE "activityId" = $1)
       AND activities."deviceId" = (SELECT "deviceId" FROM activities WHERE "activityId" = $1)
+      AND "deleted" = false
       ORDER BY "startTime" ASC
       LIMIT 1`;
 
@@ -52,7 +54,7 @@ export class ActivityRepositoryImpl implements ActivityRepository {
       "endTime", "distanceKm", "avgSpeedKm", activities."deviceId", devices."name" AS "device"
       FROM activities
       INNER JOIN devices ON activities."deviceId" = devices."deviceId"
-      WHERE 1 = 1 `;
+      WHERE deleted = false `;
     if (filter.userId) {
       query += `AND "userId" = :userId `;
     }
@@ -96,7 +98,8 @@ export class ActivityRepositoryImpl implements ActivityRepository {
       `SELECT "activityId", activities."name", "startTime", 
       "endTime", "distanceKm", "avgSpeedKm", activities."deviceId", devices."name" AS "device"
       FROM activities
-      INNER JOIN devices ON activities."deviceId" = devices."deviceId"`,
+      INNER JOIN devices ON activities."deviceId" = devices."deviceId"
+      WHERE "deleted" = false`,
     );
 
     return result.rows;
@@ -123,9 +126,10 @@ export class ActivityRepositoryImpl implements ActivityRepository {
   }
 
   public async delete(entity: Activity): Promise<void> {
-    await this.client.query(`DELETE FROM activities WHERE "activityId" = $1`, [
-      entity.activityId,
-    ]);
+    await this.client.query(
+      `UPDATE activities SET "deleted" = true WHERE "activityId" = $1`,
+      [entity.activityId],
+    );
   }
 
   public async insert(entity: Partial<Activity>): Promise<Activity> {
