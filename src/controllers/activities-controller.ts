@@ -64,14 +64,19 @@ export class ActivitiesController implements interfaces.Controller {
         throw new Error('Cannot find activity or previous');
       }
 
-      const locations = await unitOfWork.locationRepository.getTimeRange(
-        previous.startTime,
-        current.endTime,
-        current.deviceId,
-        30,
-      );
+      const currentLocations =
+        await unitOfWork.activityLocationRepository.getByActivity(
+          current.activityId,
+          30,
+        );
+      const previousLocation =
+        await unitOfWork.activityLocationRepository.getByActivity(
+          previous.activityId,
+          30,
+        );
+      const locations = previousLocation.concat(currentLocations);
 
-      let speedSum = 0;
+      let distanceSum = 0;
 
       const totalTime =
         current.endTime.getTime() - previous.startTime.getTime();
@@ -81,24 +86,32 @@ export class ActivitiesController implements interfaces.Controller {
         const location = locations[i];
 
         const distance = haversine(last, location, { unit: 'meter' });
-        const time = location.time.getTime() - last.time.getTime();
 
-        speedSum += distance / (time / 1000);
+        distanceSum += distance;
       }
 
-      const speedAvg = speedSum / (locations.length - 1);
-      const distance = speedAvg * (totalTime / 1000);
+      const speedAvg = distanceSum / (totalTime / 1000);
 
       const activity = {
         deviceId: current.deviceId,
         avgSpeedKm: speedAvg * 3.6,
-        distanceKm: distance / 1000,
+        distanceKm: distanceSum / 1000,
         startTime: previous.startTime,
         endTime: current.endTime,
         name: getActivity(speedAvg).name,
       };
 
       const newActivity = await unitOfWork.activityRepository.insert(activity);
+      for (const location of locations) {
+        await unitOfWork.activityLocationRepository.insert({
+          activityId: newActivity.activityId,
+          accuracy: location.accuracy,
+          altitude: location.altitude,
+          latitude: location.latitude,
+          longitude: location.longitude,
+          time: location.time,
+        });
+      }
       await unitOfWork.activityRepository.delete(current);
       await unitOfWork.activityRepository.delete(previous);
 
