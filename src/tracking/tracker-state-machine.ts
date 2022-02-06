@@ -30,6 +30,7 @@ export class TrackerStateMachineImpl implements TrackerStateMachine {
   private currentActivityId?: number;
   private lastLocation?: KalmanLocation;
   private kalmanFilter: KalmanFilter;
+  private activityLocations: KalmanLocation[] = [];
 
   constructor(
     @inject(TYPES.UnitOfWorkFactory)
@@ -68,6 +69,8 @@ export class TrackerStateMachineImpl implements TrackerStateMachine {
       altitude: location.altitude,
     } as KalmanLocation;
 
+    this.activityLocations.push(currentLocation);
+
     if (this.lastLocation) {
       const timeDiff = currentLocation.time - this.lastLocation.time;
       if (timeDiff <= 0) {
@@ -92,15 +95,6 @@ export class TrackerStateMachineImpl implements TrackerStateMachine {
       }
 
       this.state = await this.state.newSpeed(speed);
-
-      if (this.currentActivityId) {
-        await this.unitOfWorkFactory.execute(
-          async unitOfWork =>
-            await unitOfWork.activityLocationRepository.insert(
-              this.getActivityLocation(currentLocation),
-            ),
-        );
-      }
     }
 
     this.lastLocation = currentLocation;
@@ -136,18 +130,34 @@ export class TrackerStateMachineImpl implements TrackerStateMachine {
       } as DbActivity;
 
       if (!this.currentActivityId) {
+        // this is a new activity so drop all the location before the start time
+        const startIndex = this.activityLocations.findIndex(
+          x => x.time >= activity.startTime.getTime(),
+        );
+        this.activityLocations.splice(0, startIndex);
+
         const result = await unitOfWork.activityRepository.insert(newActivity);
         this.currentActivityId = result.activityId;
-        await unitOfWork.activityLocationRepository.insert(
-          this.getActivityLocation(this.lastLocation),
-        );
       } else {
         newActivity.activityId = this.currentActivityId;
         await unitOfWork.activityRepository.update(newActivity);
       }
 
       if (!inProgress) {
-        // We're at the end of the activity so reset the currentActivityId
+        // We're at the end of the activity so save the locations and reset the currentActivityId
+        const activityEndLocationIndex = this.activityLocations.findIndex(
+          x => x.time > activity.endTime.getTime(),
+        );
+        const activityLocations = this.activityLocations.splice(
+          0,
+          activityEndLocationIndex,
+        );
+        for (const location of activityLocations) {
+          await unitOfWork.activityLocationRepository.insert(
+            this.getActivityLocation(location),
+          );
+        }
+
         this.currentActivityId = undefined;
       }
     });
