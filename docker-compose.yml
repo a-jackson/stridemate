@@ -2,7 +2,8 @@ version: '3.2'
 
 services:
   app:
-    image: ajackson3/activity-tracker
+    image: ghcr.io/a-jackson/stridemate
+    build: .
     depends_on:
       - db
     ports:

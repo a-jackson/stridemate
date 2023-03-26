@@ -41,7 +41,7 @@
       </div>
     </div>
   </nav>
-  <router-view class="section"></router-view>
+  <router-view class="section h-100"></router-view>
 </template>
 
 <script lang="ts">

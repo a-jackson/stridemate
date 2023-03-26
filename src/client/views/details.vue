@@ -1,6 +1,6 @@
 <template>
-  <div class="details tile is-ancestor" v-if="activity">
-    <div class="tile is-vertical">
+  <div class="details tile is-ancestor h-100" v-if="activity">
+    <div class="tile is-vertical h-100">
       <div class="tile">
         <div class="tile is-parent is-3">
           <div class="tile is-child notification is-warning">
@@ -81,12 +81,9 @@
           </div>
         </div>
       </div>
-      <div class="title" style="height: 50vh">
-        <div class="tile is-parent" style="height: 100%">
-          <div
-            class="tile is-child notification is-primary"
-            style="height: 100%"
-          >
+      <div class="title h-100">
+        <div class="tile is-parent h-100">
+          <div class="tile is-child notification is-primary h-100">
             <activity-map
               style="width: 100%; height: 100%"
               :id="id"
