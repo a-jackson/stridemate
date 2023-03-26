@@ -1,12 +1,12 @@
 {
-  "name": "fitness",
-  "version": "0.0.1",
+  "name": "stridemate",
+  "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",
   "author": "Andrew Jackson",
-  "license": "MIT",
+  "license": "GPLv3",
   "repository": {
-    "url": "",
+    "url": "https://github.com/a-jackson/stridemate",
     "type": "git"
   },
   "scripts": {
